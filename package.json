@@ -1,0 +1,33 @@
+{
+  "private": true,
+  "author": "fengyuchao <fengyuchao@hashdata.cn>",
+  "scripts": {
+    "dev": "max dev",
+    "build": "max build",
+    "format": "prettier --cache --write .",
+    "prepare": "husky install",
+    "postinstall": "max setup",
+    "setup": "max setup",
+    "start": "npm run dev"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^4.8.0",
+    "@ant-design/pro-components": "^2.0.1",
+    "@umijs/max": "^4.0.64",
+    "antd": "^5.0.0",
+    "copy-to-clipboard": "^3.3.3",
+    "moment": "^2.29.4",
+    "react-router-dom": "^6.10.0",
+    "react-router6-prompt": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
+    "prettier-plugin-organize-imports": "^2",
+    "prettier-plugin-packagejson": "^2",
+    "typescript": "^5.0.0"
+  }
+}

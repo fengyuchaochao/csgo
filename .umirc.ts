@@ -1,0 +1,43 @@
+import { defineConfig } from '@umijs/max';
+
+export default defineConfig({
+  antd: {},
+  access: {},
+  model: {},
+  initialState: {},
+  request: {},
+  layout: {
+    title: 'Steam搬砖',
+  },
+  routes: [
+    {
+      name: '首页',
+      path: '/',
+      component: './Index',
+    },
+  ],
+  npmClient: 'pnpm',
+  proxy: {
+    '/api/market': {
+      'target': 'https://buff.163.com',
+      'changeOrigin': true,
+      // 'pathRewrite': { '^/api' : '' },
+    },
+    '/market': {
+      'target': 'https://steamcommunity.com',
+      'changeOrigin': true,
+      // 'pathRewrite': { '^/api' : '' },
+    },
+    '/api': {
+      'target': 'http://panyunkejigs.com',
+      'changeOrigin': true,
+      // 'pathRewrite': { '^/api' : '' },
+    },
+    '/local': {
+      'target': 'http://localhost:5000',
+      'changeOrigin': true,
+      // 'pathRewrite': { '^/api' : '' },
+    },
+  }
+});
+
