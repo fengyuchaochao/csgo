@@ -13,7 +13,7 @@ const Search: React.FC<{
         page_size: 10000,
         cardPrice: 600,
         buffMinSellNum: 20,
-        buffMaxSellNum: 9999,
+        buffMaxSellNum: 500,
         steamBuyPriceMin: 1,
         steamBuyPriceMax: 10,
         itemNameInclude: '',
@@ -22,7 +22,7 @@ const Search: React.FC<{
         profitRateMax: 99999.99,
         // buff登录需要信息
         session: '1-sRPYkPx7u_xfm8DGHrxkOCHaBXmsMjZcsTCEoo4mv92s2033426027',
-        csrf_token: 'IjAyNzQ0YjExMWYyNTAxZGY5YTk1MGMwMzM1YTJkNjkxNjc5ODUwNzEi.FxEZ9w.lrIYLIF-79xH4FSYIScZLzMa-9o',
+        csrf_token: 'IjAyNzQ0YjExMWYyNTAxZGY5YTk1MGMwMzM1YTJkNjkxNjc5ODUwNzEi.FyKEjw.7ub5Gh6JALGowFP-Kpn-4dubr_k',
     }
     const [openStatus, setOpenStatus] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -40,7 +40,8 @@ const Search: React.FC<{
         }).then(response => response.json()).then(data => {
             onSearch({
                 searchParams: params,
-                resultList: data.itemList || []
+                resultList: data.itemList || [],
+                resultTotalCount: data.itemCount || 0
             });
         });
         setLoading(false);

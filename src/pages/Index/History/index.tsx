@@ -73,7 +73,7 @@ const History: React.FC<unknown> = () => {
   }).then(response => response.json()).then(data => {
       message.success('更新成功');
       setOpen(false);
-      getHistoryList();
+      getHistoryList(keyword);
     
   });
   } 
@@ -190,8 +190,7 @@ const History: React.FC<unknown> = () => {
   
 
 
-  const getHistoryList = async () => {
-
+  const getHistoryList = async (keyword) => {
     let url = `/local/api/good/list`;
     if (keyword) {
       url = url + `?goodName=${keyword}`;
@@ -203,9 +202,10 @@ const History: React.FC<unknown> = () => {
       setGoodList(list)
     });
   }
-  const search = (e) => {
-    setKeyword(e.target.value);
-    getHistoryList();
+  const search = async (e) => {
+    const keyword = e.target.value;
+    setKeyword(keyword);
+    getHistoryList(keyword);
   }
   useEffect(() => {
     getHistoryList();

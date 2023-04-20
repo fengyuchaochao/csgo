@@ -8,8 +8,9 @@ const Result: React.FC<{
     searchParams: any,
     resultList: any,
     setResultList: any,
+    resultTotalCount: number,
 }> = (props) => {
-    const { searchParams, resultList, setResultList } = props;
+    const { searchParams, resultList, setResultList, resultTotalCount } = props;
     resultList.forEach((item, index) => {
         item.index = index;
     })
@@ -40,7 +41,7 @@ const Result: React.FC<{
         const game = 'csgo';
         const pageNum = 1;
         const url = sortBy ? `/api/market/goods/sell_order?game=${game}&goods_id=${goodId}&sort_by=${sortBy}&page_num=${pageNum}`
-            : `/api/market/goods/sell_order?game=${game}&goods_id=${goodId}&page_num=${pageNum}`;
+            : `/api/market/goods/bill_order?game=${game}&goods_id=${goodId}`;
         const { data } = await fetch(url)
             .then(response => response.json());
         message.destroy();
@@ -93,17 +94,24 @@ const Result: React.FC<{
     const getLatestBuffData = async (record) => {
         const goodInfo = await getGoodInfo(record.name);
         // 根据成交记录判断是否符合购买条件
-        const { items:orderList, goods_infos } = await getOrderListByGoodId(goodInfo.goods_ids);
-        const isValid = orderList.every(order => {
-            const currentDay = moment().format('YYYY-MM-DD 00:00:00');
-            return new Date(order.updated_at * 1000) >= new Date(currentDay);
+        const data = await getOrderListByGoodId(goodInfo.goods_ids);
+        if (!data) return;
+        const { items: orderList = [] } = data;
+        const filterOrderList = orderList.filter((order, index) => {
+            const currentDay = moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
+            const preDay = moment(currentDay).subtract(2, 'days').format('YYYY-MM-DD 00:00:00'); // 3天前
+            console.log(index, preDay, moment(new Date(order.created_at * 1000)).format('YYYY-MM-DD '));
+            if (new Date(order.updated_at * 1000) >= new Date(preDay)) {
+                return order;
+            }
         })
-        record.goodId = goodInfo.goods_ids;
-        record.goodInfo = goods_infos[goodInfo.goods_ids];
-        record.valid = isValid;
+        record.valid = filterOrderList.length >= 5;
 
         // 获取buff订单的当前最低价格
-        const { items: orderList2, total_count } = await getOrderListByGoodId(goodInfo.goods_ids, 'default');
+        const data2 = await getOrderListByGoodId(goodInfo.goods_ids, 'default');
+        const { items: orderList2 = [], total_count, goods_infos } = data2;
+        record.goodId = goodInfo.goods_ids;
+        record.goodInfo = goods_infos[goodInfo.goods_ids];
         record.lowestPriceBuffOrder = orderList2[0];
         record.orderTotalCount = total_count;
 
@@ -162,7 +170,6 @@ const Result: React.FC<{
             dataIndex: 'name',
             key: 'name',
             width: 200,
-            fixed: 'left',
             render: (_, record) => {
                 return <span style={{cursor: 'pointer'}} onClick={() => copyName(record.name)}>{record.name} <CopyOutlined style={{color: '#1776FF'}} /></span>;
             }
@@ -263,7 +270,11 @@ const Result: React.FC<{
                 </Form.Item>
             </Form>
         </Modal>
-        <Table size="small" columns={columns} dataSource={resultList} rowKey="index" pagination={{defaultPageSize: 100}} />
+        <Table size="small"
+            columns={columns}
+            dataSource={resultList}
+            rowKey="index"
+            pagination={{ defaultPageSize: 100, total: resultTotalCount, showTotal: (total) => `总共${total}条`}} />
     </div>);
 }
 
