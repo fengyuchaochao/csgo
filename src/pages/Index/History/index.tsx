@@ -181,12 +181,18 @@ const History: React.FC<unknown> = () => {
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 120,
+      align: 'center',
       render: (_, record) => {
+          const buffUrl = `https://buff.163.com/goods/${record.goodId}?from=market#tab=selling`;
+          const steamUrl = `https://steamcommunity.com/market/listings/${record?.rawData?.goodInfo?.appid}/${record?.rawData?.goodInfo?.market_hash_name}`;
+                
           return (
-              <Space size="middle">
-                  <Button size="small" type="primary" onClick={() => getLatestBuffData(record)}>Buff实时数据</Button>
-                  <Button size="small" type="primary" disabled={!record.goodId} onClick={() => toUpdateGood(record)}>更新</Button>
+            <Space size="middle" block={ true} direction="vertical">
+                <Button size="small" type="primary" onClick={() => getLatestBuffData(record)}>Buff实时数据</Button>
+                <Button size="small" type="link" target="_blank" disabled={!record.goodId} href={buffUrl}>Buff详情</Button>
+                <Button size="small" type="link" target="_blank" disabled={!record.goodId} href={steamUrl}>Steam详情</Button>
+                <Button size="small" type="primary" disabled={!record.goodId} onClick={() => toUpdateGood(record)}>更新售出价格</Button>
               </Space>
           )
       }
