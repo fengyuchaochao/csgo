@@ -92,21 +92,24 @@ const History: React.FC<unknown> = () => {
       }
     },
     {
-      title: '图像',
-      render: (_, record) => {
-        return <Image width={100} src={record?.rawData?.goodInfo?.icon_url} />
-      }
-    },
-    {
 
       title: '饰品ID',
       dataIndex: 'goodId',
       key: 'goodId',
+      width: 80,
+    },
+    {
+      title: '图像',
+      width: 80,
+      render: (_, record) => {
+        return <Image width={60} src={record?.rawData?.goodInfo?.icon_url} />
+      }
     },
     {
       title: '饰品名',
       dataIndex: 'goodName',
       key: 'goodName',
+      width: 200,
       render: (_, record) => {
           return <span style={{cursor: 'pointer'}} onClick={() => copyName(record.goodName)}>{record.goodName} <CopyOutlined style={{color: '#1776FF'}} /></span>;
       }
