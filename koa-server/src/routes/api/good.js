@@ -6,12 +6,13 @@ const router = new Router();
 
 
 router.post("/add", async ctx => {
-    const { goodName, goodId, steamBuyPrice, steamBuyCount } = ctx.request.body;
+    const { goodName, goodId, steamBuyPrice, steamBuyCount, rawData } = ctx.request.body;
     const newGood = new Good({
         goodName,
         goodId,
         steamBuyPrice,
         steamBuyCount,
+        rawData,
         createTime: Date.now(),
         updateTime: Date.now()
     })

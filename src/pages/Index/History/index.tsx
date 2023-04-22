@@ -1,7 +1,7 @@
 import {
     PageContainer,
   } from '@ant-design/pro-components';
-import { Modal, Form, Space, Table, Button, InputNumber, message, Input } from 'antd';
+import { Modal, Form, Space, Table, Button, InputNumber, message, Input, Image } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { CopyOutlined, CloseCircleFilled, CheckCircleFilled} from '@ant-design/icons'
 import copy from 'copy-to-clipboard';
@@ -89,6 +89,12 @@ const History: React.FC<unknown> = () => {
       align: 'center',
       render: (_, record, index) => {
           return index + 1;
+      }
+    },
+    {
+      title: '图像',
+      render: (_, record) => {
+        return <Image width={100} src={record?.rawData?.goodInfo?.icon_url} />
       }
     },
     {
