@@ -1,8 +1,8 @@
 import {
     PageContainer,
   } from '@ant-design/pro-components';
-import { Modal, Form, Space, Table, Button, InputNumber, message, Input, Image } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Modal, Form, Space, Table, Button, InputNumber, message, Input, Image, Popconfirm } from 'antd';
+import React, { useEffect, useState, computed } from 'react';
 import { CopyOutlined, CloseCircleFilled, CheckCircleFilled} from '@ant-design/icons'
 import copy from 'copy-to-clipboard';
 import moment from 'moment';
@@ -77,6 +77,11 @@ const History: React.FC<unknown> = () => {
     
   });
   } 
+  const deleteGood = async (record) => {
+    const url = `/local/api/good/delete?id=${record._id}`;
+    await fetch(url)
+    getHistoryList(keyword);
+  }
   const hideModal = () => {
     setOpen(false);
     form.resetFields();
@@ -87,20 +92,21 @@ const History: React.FC<unknown> = () => {
       title: '索引',
       width: 50,
       align: 'center',
+      fixed: 'left',
       render: (_, record, index) => {
           return index + 1;
       }
     },
-    {
-
-      title: '饰品ID',
-      dataIndex: 'goodId',
-      key: 'goodId',
-      width: 80,
-    },
+    // {
+    //   title: '饰品ID',
+    //   dataIndex: 'goodId',
+    //   key: 'goodId',
+    //   width: 80,
+    // },
     {
       title: '图像',
       width: 80,
+      fixed: 'left',
       render: (_, record) => {
         return <Image width={60} src={record?.rawData?.goodInfo?.icon_url} />
       }
@@ -109,13 +115,15 @@ const History: React.FC<unknown> = () => {
       title: '饰品名',
       dataIndex: 'goodName',
       key: 'goodName',
+      fixed: 'left',
       width: 200,
       render: (_, record) => {
           return <span style={{cursor: 'pointer'}} onClick={() => copyName(record.goodName)}>{record.goodName} <CopyOutlined style={{color: '#1776FF'}} /></span>;
       }
     },
     {
-      title: '单价成本',
+      title: '单件成本',
+      width: 100,
       render: (_, record) => {
         return <p>
           <span>{ (record.steamBuyPrice * 6).toFixed(2) }</span>
@@ -124,13 +132,29 @@ const History: React.FC<unknown> = () => {
       }
     },
     {
+      title: '单件利润',
+      dataIndex: '',
+      key: '',
+      width: 100,
+      render: (_, record) => {
+        if (!record?.lowestPriceBuffOrder) return;
+        const steamBuyPrice = (record.steamBuyPrice * 6).toFixed(2);
+        const lowestPriceBuffOrder = record?.lowestPriceBuffOrder?.price;
+        const rateValue = (lowestPriceBuffOrder - +steamBuyPrice).toFixed(2);
+        const rate = (+rateValue / +steamBuyPrice).toFixed(2);
+        return <p>{rateValue}（{(+rate * 100).toFixed(2)}%）</p>
+      }
+    },
+    {
       title: '购买数量',
       dataIndex: 'steamBuyCount',
       key: 'steamBuyCount',
+      width: 100,
     },
     {
       title: 'buff在售价格（最低）',
       key: 'lowestPriceBuffOrder',
+      width: 180,
       render: (_, record) => { 
         const price = record?.lowestPriceBuffOrder?.price;
         return price ? `${price}（${(price / 6.9).toFixed(2)}$）` : '';
@@ -138,6 +162,7 @@ const History: React.FC<unknown> = () => {
     },
     {
       title: 'buff交易记录',
+      width: 180,
       render: (_, record) => {
         return <p>
           {(record.orderList || []).map((item, index) => {
@@ -148,6 +173,7 @@ const History: React.FC<unknown> = () => {
     },
     {
       title: '推荐卖出价格',
+      width: 180,
       render: (_, record) => {
         const price = Number((record.steamBuyPrice * 6).toFixed(2));
 
@@ -186,6 +212,7 @@ const History: React.FC<unknown> = () => {
       key: 'action',
       width: 120,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => {
           const buffUrl = `https://buff.163.com/goods/${record.goodId}?from=market#tab=selling`;
           const steamUrl = `https://steamcommunity.com/market/listings/${record?.rawData?.goodInfo?.appid}/${record?.rawData?.goodInfo?.market_hash_name}`;
@@ -195,16 +222,32 @@ const History: React.FC<unknown> = () => {
                 <Button size="small" type="primary" onClick={() => getLatestBuffData(record)}>Buff实时数据</Button>
                 <Button size="small" type="link" target="_blank" disabled={!record.goodId} href={buffUrl}>Buff详情</Button>
                 <Button size="small" type="link" target="_blank" disabled={!record.goodId} href={steamUrl}>Steam详情</Button>
-                <Button size="small" type="primary" disabled={!record.goodId} onClick={() => toUpdateGood(record)}>更新售出价格</Button>
+                <Button size="small" type="primary" disabled={!record.goodId} onClick={() => toUpdateGood(record)}>更新成本价格</Button>
+                <Popconfirm title="提示" description="确定要删除吗？" onConfirm={() => deleteGood(record) }>
+                  <Button size="small" danger>删除</Button>
+                </Popconfirm>
               </Space>
           )
       }
     },
 
   ]
+
+  const [rate, setRate] = useState('');
+  const [ratePercent, setRatePercent] = useState('');
+
+  const changeRate = () => {
+    const formData = form.getFieldValue();
+    if (!currentGood?.lowestPriceBuffOrder) return;
+    const steamBuyPrice = (formData.steamBuyPrice * 6).toFixed(2);
+    console.log(123123, steamBuyPrice);
+    const lowestPriceBuffOrder = currentGood?.lowestPriceBuffOrder?.price;
+    const rateValue = (lowestPriceBuffOrder - +steamBuyPrice).toFixed(2);
+    const ratePercent = (+rateValue / +steamBuyPrice).toFixed(2);
+    setRate(rateValue);
+    setRatePercent(`${(ratePercent * 100).toFixed(2)}%`);
+  }
   
-
-
   const getHistoryList = async (keyword) => {
     let url = `/local/api/good/list`;
     if (keyword) {
@@ -222,16 +265,22 @@ const History: React.FC<unknown> = () => {
     setKeyword(keyword);
     getHistoryList(keyword);
   }
+
   useEffect(() => {
     getHistoryList();
   }, []);
+
+  
 
   return <>
     <Modal title="购买当前饰品" open={open} onOk={updateGood} onCancel={() => hideModal()}>
       <Form form={form} initialValues={initSteamBuyForm }>
           <Form.Item label="购买单价" name="steamBuyPrice">
-              <InputNumber addonBefore="$"/>
-          </Form.Item>
+          <InputNumber addonBefore="$" onChange={changeRate} />
+        </Form.Item>
+        <Form.Item label="利润">
+          {rate}（{ratePercent}）
+        </Form.Item>
           <Form.Item label="购买数量" name="steamBuyCount">
               <InputNumber/>
           </Form.Item>
@@ -240,7 +289,7 @@ const History: React.FC<unknown> = () => {
     <Space>
       <Input placeholder="输入饰品名" allowClear style={{ width: 700, marginBottom: 16 }} size="large" onChange={search} />
     </Space>
-    <Table size="small" rowKey="_id" columns={columns} dataSource={goodList} />
+    <Table size="small" rowKey="_id" columns={columns} dataSource={goodList} scroll={{ x: 1300 }}/>
   </>
 };
 

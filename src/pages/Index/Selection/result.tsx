@@ -51,6 +51,10 @@ const Result: React.FC<{
     const getSteamData = async (record) => { 
         message.loading('获取steam实时数据...');
         const steamGoodId = await getSteamGoodId(record);
+        if (!steamGoodId) {
+            alert('获取steamGoodId失败');
+            return;
+        }
         await getSteamGoodSaleData(steamGoodId, record);
         message.destroy();
     }
@@ -75,7 +79,7 @@ const Result: React.FC<{
           })
           .then(stream => new Response(stream))
           .then(response => response.text())
-        let arr = res.match(/Market_LoadOrderSpread\(\s*(\d+)\s*\)/);
+        let arr = res.match(/Market_LoadOrderSpread\(\s*(\d+)\s*\)/) || [];
         const steamGoodId = arr[1];
         return steamGoodId;
     }
@@ -84,7 +88,12 @@ const Result: React.FC<{
     const getSteamGoodSaleData = async (steamGoodId, record) => {
         const url = `/market/itemordershistogram?country=HK&language=schinese&currency=1&two_factor=0&item_nameid=${steamGoodId}`
         const res = await fetch(url).then(response => response.json());
+        if (!res) { 
+            alert('获取steam销售数据失败');
+            return;
+        }
         const { sell_order_graph, buy_order_graph } = res;        
+        
         record.steamLowestSellPrice = sell_order_graph[0][0];
         record.steamHighestBuyPrice = buy_order_graph[0][0];
 
@@ -99,7 +108,7 @@ const Result: React.FC<{
         const { items: orderList = [] } = data;
         const filterOrderList = orderList.filter((order, index) => {
             const currentDay = moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
-            const preDay = moment(currentDay).subtract(2, 'days').format('YYYY-MM-DD 00:00:00'); // 3天前
+            const preDay = moment(currentDay).subtract(3, 'days').format('YYYY-MM-DD 00:00:00'); // 3天前
             console.log(index, preDay, moment(new Date(order.created_at * 1000)).format('YYYY-MM-DD '));
             if (new Date(order.updated_at * 1000) >= new Date(preDay)) {
                 return order;
