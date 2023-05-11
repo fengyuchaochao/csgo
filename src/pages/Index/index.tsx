@@ -8,6 +8,7 @@ const { TabPane } = Tabs;
 
 import Selection from './Selection/index';
 import History from './History/index';
+import Sale from './Sale/index';
   
 
   
@@ -31,6 +32,9 @@ import History from './History/index';
         </TabPane>
         <TabPane tab="库存" key="2">
           <History/>
+        </TabPane>
+        <TabPane tab="上架" key="3">
+          <Sale/>
         </TabPane>
       </Tabs>
     );

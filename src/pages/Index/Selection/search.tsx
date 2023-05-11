@@ -21,14 +21,21 @@ const Search: React.FC<{
         profitRateMin: 0,
         profitRateMax: 99999.99,
         // buff登录需要信息
-        session: '1-sRPYkPx7u_xfm8DGHrxkOCHaBXmsMjZcsTCEoo4mv92s2033426027',
-        csrf_token: 'IjAyNzQ0YjExMWYyNTAxZGY5YTk1MGMwMzM1YTJkNjkxNjc5ODUwNzEi.FyKEjw.7ub5Gh6JALGowFP-Kpn-4dubr_k',
+        session: '1-9YH18ko9Z8fTbUY2jPncuMpgPyadY1l5MRHz6Ld5zGjP2033426027',
+        csrf_token: 'IjFkMGRhYjNhMzU4ZjMxNzdmYTM4OWQ2OTQwYmMyZjNlYmYxZmZiNzAi.Fzzreg.IzOD3dGg29tpOs18wbrMxj5-aMs'
     }
     const [openStatus, setOpenStatus] = useState(false);
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
     const handleSearch = async () => {
         const params = form.getFieldValue();
+
+        // 更新本地token和csrf_token
+        const csrf_token = params.csrf_token;
+        const session = params.session;
+        document.cookie = `session=${session}`;
+        document.cookie = `csrf_token=${csrf_token};`;
+
         let formData = new FormData();
         Object.keys(params).forEach(key => {
             formData.append(key, params[key])

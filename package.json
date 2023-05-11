@@ -2,7 +2,7 @@
   "private": true,
   "author": "fengyuchao <fengyuchao@hashdata.cn>",
   "scripts": {
-    "dev": "max dev",
+    "dev": "cross-env UMI_ENV=dev PORT=7777 max dev",
     "build": "max build",
     "format": "prettier --cache --write .",
     "prepare": "husky install",
@@ -23,8 +23,10 @@
   "devDependencies": {
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "cross-env": "^7.0.3",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
+    "p-limit": "^4.0.0",
     "prettier": "^2.7.1",
     "prettier-plugin-organize-imports": "^2",
     "prettier-plugin-packagejson": "^2",

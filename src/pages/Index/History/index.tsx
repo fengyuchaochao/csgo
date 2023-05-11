@@ -30,7 +30,7 @@ const History: React.FC<unknown> = () => {
     const game = 'csgo';
     const pageNum = 1;
     const url = sortBy ? `/api/market/goods/sell_order?game=${game}&goods_id=${goodId}&sort_by=${sortBy}&page_num=${pageNum}`
-        : `/api/market/goods/sell_order?game=${game}&goods_id=${goodId}&page_num=${pageNum}`;
+        : `/api/market/goods/bill_order?game=${game}&goods_id=${goodId}&page_num=${pageNum}`;
     const { data } = await fetch(url)
         .then(response => response.json());
     message.destroy();
@@ -39,10 +39,11 @@ const History: React.FC<unknown> = () => {
   
   const getLatestBuffData = async (record) => {
     // 根据成交记录
-    const { items: orderList } = await getOrderListByGoodId(record.goodId);
+    const res = await getOrderListByGoodId(record.goodId)
+    const { items: orderList = [] } = res;
     record.orderList = orderList;
     // 获取buff订单的当前最低价格
-    const { items: orderList2 } = await getOrderListByGoodId(record.goodId, 'default');
+    const { items: orderList2 = [] } = await getOrderListByGoodId(record.goodId, 'default');
     record.lowestPriceBuffOrder = orderList2[0];
 
     setGoodList([...goodList]);
@@ -218,7 +219,7 @@ const History: React.FC<unknown> = () => {
           const steamUrl = `https://steamcommunity.com/market/listings/${record?.rawData?.goodInfo?.appid}/${record?.rawData?.goodInfo?.market_hash_name}`;
                 
           return (
-            <Space size="middle" block={ true} direction="vertical">
+            <Space size="middle" direction="vertical">
                 <Button size="small" type="primary" onClick={() => getLatestBuffData(record)}>Buff实时数据</Button>
                 <Button size="small" type="link" target="_blank" disabled={!record.goodId} href={buffUrl}>Buff详情</Button>
                 <Button size="small" type="link" target="_blank" disabled={!record.goodId} href={steamUrl}>Steam详情</Button>
@@ -240,7 +241,6 @@ const History: React.FC<unknown> = () => {
     const formData = form.getFieldValue();
     if (!currentGood?.lowestPriceBuffOrder) return;
     const steamBuyPrice = (formData.steamBuyPrice * 6).toFixed(2);
-    console.log(123123, steamBuyPrice);
     const lowestPriceBuffOrder = currentGood?.lowestPriceBuffOrder?.price;
     const rateValue = (lowestPriceBuffOrder - +steamBuyPrice).toFixed(2);
     const ratePercent = (+rateValue / +steamBuyPrice).toFixed(2);

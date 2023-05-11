@@ -76,6 +76,17 @@ router.get('/delete', async ctx => {
     };
 });
 
+router.get('/detail', async ctx => {
+    const { goodId } = ctx.request.query;
+    const data = await Good.findOne({
+        goodId
+    })
+
+    ctx.status = 200;
+    ctx.body = {
+        data
+    };
+});
 
 
 module.exports=router.routes();

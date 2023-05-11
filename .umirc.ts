@@ -22,6 +22,10 @@ export default defineConfig({
       'target': 'https://buff.163.com',
       'changeOrigin': true,
       // 'pathRewrite': { '^/api' : '' },
+      headers: {
+        Origin: 'https://buff.163.com',
+        Referer: 'https://buff.163.com',
+      },
     },
     '/market': {
       'target': 'https://steamcommunity.com',
@@ -34,7 +38,7 @@ export default defineConfig({
       // 'pathRewrite': { '^/api' : '' },
     },
     '/local': {
-      'target': 'http://localhost:5000',
+      'target': 'http://localhost:7778',
       'changeOrigin': true,
       // 'pathRewrite': { '^/api' : '' },
     },

@@ -26,9 +26,6 @@ const Result: React.FC<{
     const getGoodInfo = async (name) => {
         message.loading('获取饰品ID中...');
         const game = 'csgo';
-        const csrf_token = searchParams.csrf_token;
-        const session = searchParams.session;
-        document.cookie = `session=${session};csrf_token=${csrf_token};`;
         const { data } = await fetch(`/api/market/search/suggest?text=${name}&game=${game}`).then(response => response.json());
         const { suggestions = [] } = data;
         message.destroy();
