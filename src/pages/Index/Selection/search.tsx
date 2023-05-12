@@ -21,7 +21,7 @@ const Search: React.FC<{
         profitRateMin: 0,
         profitRateMax: 99999.99,
         // buff登录需要信息
-        session: '1-9YH18ko9Z8fTbUY2jPncuMpgPyadY1l5MRHz6Ld5zGjP2033426027',
+        session: '1-kT4dypLntJiU30vdPsNr9E0ia_G1ulLmTonsqfdWDUFa2033498112',
         csrf_token: 'IjFkMGRhYjNhMzU4ZjMxNzdmYTM4OWQ2OTQwYmMyZjNlYmYxZmZiNzAi.Fzzreg.IzOD3dGg29tpOs18wbrMxj5-aMs'
     }
     const [openStatus, setOpenStatus] = useState(false);

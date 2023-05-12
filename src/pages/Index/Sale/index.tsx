@@ -1,5 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Space, Table, Button, Input, Image, message, Tag, Radio } from 'antd';
+import {
+  Space,
+  Table,
+  Button,
+  Input,
+  Image,
+  message,
+  Tag,
+  Radio,
+  Select,
+} from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import copy from 'copy-to-clipboard';
 import pLimit from 'p-limit';
@@ -16,7 +26,8 @@ const getCookie = (name) => {
   return cookie[1];
 };
 
-const userIdList = ['U1107099955', 'U1107099956'];
+const userIdList = ['U1107099955', 'U1106913112'];
+const priceRateList = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
 
 const Sale: React.FC<unknown> = () => {
   const columns: any[] = [
@@ -78,14 +89,16 @@ const Sale: React.FC<unknown> = () => {
     {
       title: '自己当前在售价格',
       render: (_, record) => {
-        const castPrice = record?.steamBuyPrice;
+        const castPrice = record?.steamBuyPrice * 6;
         const curPrice = record?.myOrder?.price;
         if (!curPrice) return;
         return (
           <p>
             <span>{curPrice}</span>
             {castPrice && (
-              <span>({((curPrice - castPrice) / castPrice).toFixed(2)} %)</span>
+              <span>
+                ({(((curPrice - castPrice) / castPrice) * 100).toFixed(2)} %)
+              </span>
             )}
           </p>
         );
@@ -146,11 +159,12 @@ const Sale: React.FC<unknown> = () => {
   const [searchFormData, setSearchFormData] = useState({
     game: 'csgo',
     page_num: 1,
-    page_size: 1000, 
+    page_size: 1000,
     search: '',
     state: 'tradable',
     force: 0,
-    userId: 'U1107099955',
+    userId: 'U1106913112',
+    rate: 0.05,
   });
 
   // 获取单价饰品的成本
@@ -178,7 +192,8 @@ const Sale: React.FC<unknown> = () => {
 
     const myOrderIndex = orderList.findIndex(
       (order) =>
-        order.user_id === searchFormData.userId && order.id === item.sell_order_id,
+        order.user_id === searchFormData.userId &&
+        order.id === item.sell_order_id,
     );
     item.myOrderList = [...orderList];
     item.myOrderIndex = myOrderIndex + 1;
@@ -206,11 +221,10 @@ const Sale: React.FC<unknown> = () => {
       requestPool.push(
         limit(() => {
           return new Promise(async (resolve) => {
-
             await getCostPriceByGoodId(item.goods_id, item);
             await getBuffRank(item.goods_id, item);
             updatePrice(item);
-            
+
             setTimeout(() => {
               resolve();
             }, 5000);
@@ -251,10 +265,10 @@ const Sale: React.FC<unknown> = () => {
     const rate = Number(lowestPrice - castPrice) / castPrice;
 
     let newPrice;
-    if (rate >= 0.05) {
+    if (rate >= Number(searchFormData.rate)) {
       newPrice = Math.floor((lowestPrice - 0.01) * 100) / 100;
     } else {
-      newPrice = Math.floor(castPrice * 1.05 * 100) / 100;
+      newPrice = Math.floor(castPrice * (1 + Number(searchFormData.rate) ) * 100) / 100;
     }
 
     // 获取手续费
@@ -291,15 +305,20 @@ const Sale: React.FC<unknown> = () => {
     };
     const url2 = `/api/market/sell_order/change`;
 
-    await fetch(url2, {
+    const  res2 = await fetch(url2, {
       method: 'post',
       body: JSON.stringify(params2),
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrf_token'),
       },
-    });
-    message.destroy();
+    }).then((response) => response.json());;
+    const msg = res2?.data[record?.sell_order_id];
+    if (msg !== 'OK') {
+      message.warning(msg);
+    } else {
+      message.destroy();
+    }
   };
 
   const refresh = async (record) => {
@@ -308,19 +327,24 @@ const Sale: React.FC<unknown> = () => {
     await getBuffRank(record.goods_id, record);
     message.destroy();
   };
-  const search = () => {};
-  const changeUserId = ({target: {value}}) => {
+  const changeUserId = ({ target: { value } }) => {
     setSearchFormData({
       ...searchFormData,
-      userId: value
-    })
-  }
+      userId: value,
+    });
+  };
   const changeKeyword = (e) => {
     setSearchFormData({
       ...searchFormData,
-      search: e.target.value
-    })
-  } 
+      search: e.target.value,
+    });
+  };
+  const changePriceRate = (value) => {
+    setSearchFormData({
+      ...searchFormData,
+      rate: value,
+    });
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -339,7 +363,7 @@ const Sale: React.FC<unknown> = () => {
   }, [goodList]);
   return (
     <>
-      <Space style={{marginBottom: '12px'}}>
+      <Space style={{ marginBottom: '12px' }}>
         <Input
           value={searchFormData.search}
           placeholder="输入饰品名"
@@ -348,16 +372,24 @@ const Sale: React.FC<unknown> = () => {
           size="large"
           onChange={changeKeyword}
         />
-        <Button type="primary" size="large" onClick={getGoodListBySale}>
-          搜索
-        </Button>
         <Radio.Group
+          size="large"
           options={userIdList.map((item) => ({ label: item, value: item }))}
           value={searchFormData.userId}
           onChange={changeUserId}
           optionType="button"
           buttonStyle="solid"
         ></Radio.Group>
+        <Select
+          size="large"
+          style={{width: '100px'}}
+          defaultValue={searchFormData.rate}
+          options={priceRateList.map((item) => ({ value: item, label: item }))}
+          onChange={changePriceRate}
+        ></Select>
+        <Button type="primary" size="large" onClick={getGoodListBySale}>
+          搜索
+        </Button>
       </Space>
       <Table
         size="small"
