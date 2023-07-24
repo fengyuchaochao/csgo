@@ -28,6 +28,20 @@ const getCookie = (name) => {
 
 const userIdList = ['U1107099955', 'U1106913112'];
 const priceRateList = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
+const stateList = [
+  {
+    label: '全部',
+    value: '',
+  },
+  {
+    label: '可交易',
+    value: 'tradable',
+  },
+  {
+    label: '可出售',
+    value: 'cansell',
+  },
+];
 
 const Sale: React.FC<unknown> = () => {
   const columns: any[] = [
@@ -73,7 +87,7 @@ const Sale: React.FC<unknown> = () => {
         return (
           record.steamBuyPrice && (
             <p>
-              <span>{(record.steamBuyPrice * 6).toFixed(2)}</span>
+              <span>{(record.steamBuyPrice * cardRate).toFixed(2)}</span>
               <span>（{record.steamBuyPrice}$）</span>
             </p>
           )
@@ -83,13 +97,22 @@ const Sale: React.FC<unknown> = () => {
     {
       title: 'buff在售最低价格',
       render: (_, record) => {
-        return <span>{record?.lowestPriceBuffOrder?.price}</span>;
+        const lowestBuffPrice = record?.lowestPriceBuffOrder?.price;
+        const price = record.steamBuyPrice * cardRate; // 成本
+
+        const rate = (((lowestBuffPrice - price) / price) * 100).toFixed(2);
+        if (!lowestBuffPrice) return;
+        return (
+          <span>
+            {lowestBuffPrice}（{rate}%）
+          </span>
+        );
       },
     },
     {
       title: '自己当前在售价格',
       render: (_, record) => {
-        const castPrice = record?.steamBuyPrice * 6;
+        const castPrice = record?.steamBuyPrice * cardRate;
         const curPrice = record?.myOrder?.price;
         if (!curPrice) return;
         return (
@@ -161,11 +184,13 @@ const Sale: React.FC<unknown> = () => {
     page_num: 1,
     page_size: 1000,
     search: '',
-    state: 'tradable',
+    state: '',
     force: 0,
-    userId: 'U1106913112',
+    userId: 'U1107099955',
     rate: 0.05,
   });
+  const localCardRate = localStorage.getItem('cardRate');
+  const cardRate = localCardRate ? +localCardRate : 6;
 
   // 获取单价饰品的成本
   const getCostPriceByGoodId = async (goodId, item) => {
@@ -217,23 +242,24 @@ const Sale: React.FC<unknown> = () => {
     setGoodList(goodList);
 
     // 控制并发数量，每隔5秒，发送4个请求
-    goodList.forEach((item) => {
-      requestPool.push(
-        limit(() => {
-          return new Promise(async (resolve) => {
-            await getCostPriceByGoodId(item.goods_id, item);
-            await getBuffRank(item.goods_id, item);
-            updatePrice(item);
+    // goodList.forEach((item) => {
+    //   requestPool.push(
+    //     limit(() => {
+    //       return new Promise(async (resolve) => {
+    //         await getCostPriceByGoodId(item.goods_id, item);
+    //         await getBuffRank(item.goods_id, item);
+    //         await updatePrice(item);
+    //         await getBuffRank(item.goods_id, item);
 
-            setTimeout(() => {
-              resolve();
-            }, 5000);
-          });
-        }),
-      );
-    });
+    //         setTimeout(() => {
+    //           resolve();
+    //         }, 5000);
+    //       });
+    //     }),
+    //   );
+    // });
 
-    await Promise.all(requestPool);
+    // await Promise.all(requestPool);
   };
 
   const updatePrice = async (record) => {
@@ -259,7 +285,7 @@ const Sale: React.FC<unknown> = () => {
       return;
     }
 
-    const castPrice = record?.steamBuyPrice * 6;
+    const castPrice = record?.steamBuyPrice * cardRate;
     const lowestPrice = record?.lowestPriceBuffOrder?.price;
 
     const rate = Number(lowestPrice - castPrice) / castPrice;
@@ -268,7 +294,8 @@ const Sale: React.FC<unknown> = () => {
     if (rate >= Number(searchFormData.rate)) {
       newPrice = Math.floor((lowestPrice - 0.01) * 100) / 100;
     } else {
-      newPrice = Math.floor(castPrice * (1 + Number(searchFormData.rate) ) * 100) / 100;
+      newPrice =
+        Math.floor(castPrice * (1 + Number(searchFormData.rate)) * 100) / 100;
     }
 
     // 获取手续费
@@ -305,14 +332,14 @@ const Sale: React.FC<unknown> = () => {
     };
     const url2 = `/api/market/sell_order/change`;
 
-    const  res2 = await fetch(url2, {
+    const res2 = await fetch(url2, {
       method: 'post',
       body: JSON.stringify(params2),
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrf_token'),
       },
-    }).then((response) => response.json());;
+    }).then((response) => response.json());
     const msg = res2?.data[record?.sell_order_id];
     if (msg !== 'OK') {
       message.warning(msg);
@@ -331,6 +358,12 @@ const Sale: React.FC<unknown> = () => {
     setSearchFormData({
       ...searchFormData,
       userId: value,
+    });
+  };
+  const changeState = (value) => {
+    setSearchFormData({
+      ...searchFormData,
+      state: value,
     });
   };
   const changeKeyword = (e) => {
@@ -355,7 +388,7 @@ const Sale: React.FC<unknown> = () => {
     };
   }, []);
   useEffect(() => {
-    getGoodListBySale();
+    // getGoodListBySale();
   }, []);
 
   useEffect(() => {
@@ -372,6 +405,13 @@ const Sale: React.FC<unknown> = () => {
           size="large"
           onChange={changeKeyword}
         />
+        <Select
+          size="large"
+          style={{ width: '100px' }}
+          defaultValue={searchFormData.state}
+          options={stateList}
+          onChange={changeState}
+        ></Select>
         <Radio.Group
           size="large"
           options={userIdList.map((item) => ({ label: item, value: item }))}
@@ -382,7 +422,7 @@ const Sale: React.FC<unknown> = () => {
         ></Radio.Group>
         <Select
           size="large"
-          style={{width: '100px'}}
+          style={{ width: '100px' }}
           defaultValue={searchFormData.rate}
           options={priceRateList.map((item) => ({ value: item, label: item }))}
           onChange={changePriceRate}
