@@ -5,6 +5,8 @@ import {
   CloseCircleFilled,
   CheckCircleFilled,
   LockTwoTone,
+  CheckOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import copy from 'copy-to-clipboard';
@@ -231,7 +233,10 @@ const Result: React.FC<{
     form.resetFields();
 
     const steamHighestBuyPrice = record?.steamHighestBuyPrice;
-    form.setFieldValue('steamBuyPrice', +steamHighestBuyPrice + 0.03);
+    form.setFieldValue(
+      'steamBuyPrice',
+      (+steamHighestBuyPrice + 0.03).toFixed(2),
+    );
     form.setFieldValue('steamBuyCount', 1);
 
     setOpen(true);
@@ -399,11 +404,7 @@ const Result: React.FC<{
             </span>
             <span>
               最近7天是否已添加：
-              {!record.isRecentlyExisted ? (
-                <CheckCircleFilled style={{ color: 'green' }} />
-              ) : (
-                <CloseCircleFilled style={{ color: 'red' }} />
-              )}
+              {record.isRecentlyExisted ? <CheckOutlined /> : <CloseOutlined />}
             </span>
           </Space>
         );

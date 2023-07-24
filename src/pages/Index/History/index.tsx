@@ -107,7 +107,7 @@ const History: React.FC<unknown> = () => {
     form.resetFields();
   };
 
-  const isValidSaleRecord = (record) => {
+  const getRecommendCount = (record) => {
     const filterOrderList = (record.orderList || []).filter((item, index) => {
       const currentDay = moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
       const preDay = moment(currentDay)
@@ -118,7 +118,33 @@ const History: React.FC<unknown> = () => {
       }
       return false;
     });
-    return filterOrderList.length >= 5;
+    // 判断是否都是当天的
+    const filterOrderList2 = (record.orderList || []).filter((order, index) => {
+      const currentDay = moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
+      const preDay = moment(currentDay)
+        .subtract(1, 'days')
+        .format('YYYY-MM-DD 00:00:00'); // 3天前
+      if (new Date(order.updated_at * 1000) >= new Date(preDay)) {
+        return order;
+      }
+    });
+    /**
+     * 1. 如果交易记录最近10条，有8条以上都是当天的，则建议购买5个
+     * 2. 如果有8条以上都是最近3天的，则建议购买3个
+     * 3. 如果有5条以上都是最近3天的，则建议购买1个
+     */
+    if (filterOrderList2.length >= 8) {
+      record.recommendCount = 5;
+    } else {
+      if (filterOrderList.length >= 8) {
+        record.recommendCount = 3;
+      } else if (filterOrderList.length >= 5) {
+        record.recommendCount = 1;
+      } else {
+        record.recommendCount = undefined;
+      }
+    }
+    return record.recommendCount;
   };
 
   const columns: any[] = [
@@ -215,61 +241,64 @@ const History: React.FC<unknown> = () => {
       width: 180,
       render: (_, record) => {
         return (
-          <p>
+          <div>
             {record.lowestPriceBuffOrder &&
-              (isValidSaleRecord(record) ? (
-                <CheckCircleFilled style={{ color: 'green' }} />
+              (getRecommendCount(record) ? (
+                <Space>
+                  <CheckCircleFilled style={{ color: 'green' }} />
+                  <b>{record.recommendCount}</b>
+                </Space>
               ) : (
                 <CloseCircleFilled style={{ color: 'red' }} />
               ))}
-          </p>
+          </div>
         );
       },
     },
-    {
-      title: '推荐卖出价格',
-      width: 180,
-      render: (_, record) => {
-        const price = Number((record.steamBuyPrice * cardRate).toFixed(2));
+    // {
+    //   title: '推荐卖出价格',
+    //   width: 180,
+    //   render: (_, record) => {
+    //     const price = Number((record.steamBuyPrice * cardRate).toFixed(2));
 
-        return (
-          <p>
-            <span>
-              5%涨幅：{(price * 1.05).toFixed(2)}
-              <br />
-            </span>
-            <span>
-              10%涨幅：{(price * 1.1).toFixed(2)}
-              <br />
-            </span>
-            <span>
-              20%涨幅：{(price * 1.2).toFixed(2)}
-              <br />
-            </span>
-            <span>
-              30%涨幅：{(price * 1.3).toFixed(2)}
-              <br />
-            </span>
-            <span>
-              40%涨幅：{(price * 1.4).toFixed(2)}
-              <br />
-            </span>
-            <span>
-              50%涨幅：{(price * 1.5).toFixed(2)}
-              <br />
-            </span>
-            <span>
-              70%涨幅：{(price * 1.7).toFixed(2)}
-              <br />
-            </span>
-            <span>
-              100%涨幅：{(price * 2).toFixed(2)}
-              <br />
-            </span>
-          </p>
-        );
-      },
-    },
+    //     return (
+    //       <p>
+    //         <span>
+    //           5%涨幅：{(price * 1.05).toFixed(2)}
+    //           <br />
+    //         </span>
+    //         <span>
+    //           10%涨幅：{(price * 1.1).toFixed(2)}
+    //           <br />
+    //         </span>
+    //         <span>
+    //           20%涨幅：{(price * 1.2).toFixed(2)}
+    //           <br />
+    //         </span>
+    //         <span>
+    //           30%涨幅：{(price * 1.3).toFixed(2)}
+    //           <br />
+    //         </span>
+    //         <span>
+    //           40%涨幅：{(price * 1.4).toFixed(2)}
+    //           <br />
+    //         </span>
+    //         <span>
+    //           50%涨幅：{(price * 1.5).toFixed(2)}
+    //           <br />
+    //         </span>
+    //         <span>
+    //           70%涨幅：{(price * 1.7).toFixed(2)}
+    //           <br />
+    //         </span>
+    //         <span>
+    //           100%涨幅：{(price * 2).toFixed(2)}
+    //           <br />
+    //         </span>
+    //       </p>
+    //     );
+    //   },
+    // },
     {
       title: '创建时间',
       key: 'createTime',

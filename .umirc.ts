@@ -7,7 +7,7 @@ export default defineConfig({
   initialState: {},
   request: {},
   layout: {
-    title: 'Steam搬砖',
+    title: '测试Demo',
   },
   routes: [
     {
@@ -19,8 +19,8 @@ export default defineConfig({
   npmClient: 'pnpm',
   proxy: {
     '/api/market': {
-      'target': 'https://buff.163.com',
-      'changeOrigin': true,
+      target: 'https://buff.163.com',
+      changeOrigin: true,
       // 'pathRewrite': { '^/api' : '' },
       headers: {
         Origin: 'https://buff.163.com',
@@ -28,20 +28,19 @@ export default defineConfig({
       },
     },
     '/market': {
-      'target': 'https://steamcommunity.com',
-      'changeOrigin': true,
+      target: 'https://steamcommunity.com',
+      changeOrigin: true,
       // 'pathRewrite': { '^/api' : '' },
     },
     '/api': {
-      'target': 'http://panyunkejigs.com',
-      'changeOrigin': true,
+      target: 'http://panyunkejigs.com',
+      changeOrigin: true,
       // 'pathRewrite': { '^/api' : '' },
     },
     '/local': {
-      'target': 'http://localhost:7778',
-      'changeOrigin': true,
+      target: 'http://localhost:7778',
+      changeOrigin: true,
       // 'pathRewrite': { '^/api' : '' },
     },
-  }
+  },
 });
-
