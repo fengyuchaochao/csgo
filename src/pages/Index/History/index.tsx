@@ -151,8 +151,6 @@ const History: React.FC<unknown> = () => {
 
     record.isHighestPriceOfSteam =
       record.steamBuyPrice >= record.steamHighestBuyPrice;
-
-    console.log(123123, record.steamBuyPrice, record.steamHighestBuyPrice);
   };
 
   const toUpdateGood = (record) => {
