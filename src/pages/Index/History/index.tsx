@@ -1,3 +1,4 @@
+import { Badge } from 'antd';
 import { PageContainer } from '@ant-design/pro-components';
 import {
   Modal,
@@ -53,6 +54,27 @@ const History: React.FC<unknown> = () => {
     message.destroy();
     return data;
   };
+  // 获取饰品最近一个月的buff最低价
+  const getLowestDataByLatestMonth = async (goodId) => {
+    const url = `/api/market/goods/price_history/buff?game=csgo&goods_id=${goodId}&currency=CNY&days=30&buff_price_type=2&with_sell_num=false`;
+    const res = await fetch(url).then((response) => response.json());
+    if (!res) {
+      message.warning('获取饰品最近一个月的buff最低价 失败');
+      return;
+    }
+    let priceList = res?.data?.price_history || [];
+    priceList = priceList.sort((a, b) => {
+      if (a[1] >= b[1]) {
+        return 1;
+      }
+      return -1;
+    });
+    const lowestPrice = priceList?.[0]?.[1];
+    if (!lowestPrice) {
+      message.warning('获取饰品最近一个月的buff最低价 失败');
+    }
+    return lowestPrice;
+  };
 
   const getLatestBuffData = async (record) => {
     // 根据成交记录
@@ -64,7 +86,73 @@ const History: React.FC<unknown> = () => {
     const orderList2 = data?.items || [];
     record.lowestPriceBuffOrder = orderList2[0];
 
+    // 获取buff订单，最近一个月的最低价格
+    const data3 = await getLowestDataByLatestMonth(record.goodId);
+    if (data3) {
+      record.lowestPriceByLatestMonth = data3;
+    }
+
+    // 获取steam目前的最高价格
+    await getSteamData(record);
+
     setGoodList([...goodList]);
+  };
+
+  // 获取steam实时数据
+  const getSteamData = async (record) => {
+    message.loading('获取steam实时数据...');
+    const steamGoodId = await getSteamGoodId(record);
+    if (!steamGoodId) {
+      alert('获取steamGoodId失败');
+      return;
+    }
+    await getSteamGoodSaleData(steamGoodId, record);
+    message.destroy();
+  };
+
+  // 获取steam 商品id
+  const getSteamGoodId = async (record) => {
+    const goodId = record?.rawData?.goodInfo?.appid;
+    const goodName = record?.rawData?.goodInfo?.market_hash_name;
+    const steamUrl = `/market/listings/${goodId}/${goodName}`;
+    const res = await fetch(steamUrl)
+      .then((response) => {
+        const reader = response.body.getReader();
+        return new ReadableStream({
+          async start(controller) {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                break;
+              }
+              controller.enqueue(value);
+            }
+          },
+        });
+      })
+      .then((stream) => new Response(stream))
+      .then((response) => response.text());
+    let arr = res.match(/Market_LoadOrderSpread\(\s*(\d+)\s*\)/) || [];
+    const steamGoodId = arr[1];
+    return steamGoodId;
+  };
+  const getSteamGoodSaleData = async (steamGoodId, record) => {
+    const url = `/market/itemordershistogram?country=HK&language=schinese&currency=1&two_factor=0&item_nameid=${steamGoodId}`;
+    const res = await fetch(url).then((response) => response.json());
+    if (!res) {
+      message.warning('获取steam销售数据失败');
+      return;
+    }
+    const { sell_order_graph, buy_order_graph } = res;
+
+    record.steamLowestSellPrice = sell_order_graph?.[0]?.[0];
+    record.steamHighestBuyPrice = buy_order_graph?.[0]?.[0];
+
+    record.isHighestPriceOfSteam =
+      record.steamBuyPrice >= record.steamHighestBuyPrice;
+
+    console.log(123123, record.steamBuyPrice, record.steamHighestBuyPrice);
   };
 
   const toUpdateGood = (record) => {
@@ -128,6 +216,16 @@ const History: React.FC<unknown> = () => {
         return order;
       }
     });
+    // 判断是否都是最近7天的
+    const filterOrderList3 = (record.orderList || []).filter((order, index) => {
+      const currentDay = moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
+      const preDay = moment(currentDay)
+        .subtract(7, 'days')
+        .format('YYYY-MM-DD 00:00:00'); // 7天前
+      if (new Date(order.updated_at * 1000) >= new Date(preDay)) {
+        return order;
+      }
+    });
     /**
      * 1. 如果交易记录最近10条，有8条以上都是当天的，则建议购买5个
      * 2. 如果有8条以上都是最近3天的，则建议购买3个
@@ -139,6 +237,8 @@ const History: React.FC<unknown> = () => {
       if (filterOrderList.length >= 8) {
         record.recommendCount = 3;
       } else if (filterOrderList.length >= 5) {
+        record.recommendCount = 1;
+      } else if (filterOrderList3.length >= 8) {
         record.recommendCount = 1;
       } else {
         record.recommendCount = undefined;
@@ -196,17 +296,15 @@ const History: React.FC<unknown> = () => {
           <p>
             <span>{(record.steamBuyPrice * cardRate).toFixed(2)}</span>
             <span>（{record.steamBuyPrice}$）</span>
+
+            {record?.isHighestPriceOfSteam !== undefined &&
+              (record.isHighestPriceOfSteam ? (
+                <CheckCircleFilled style={{ color: '#52c41a' }} />
+              ) : (
+                <CloseCircleFilled style={{ color: 'red' }} />
+              ))}
           </p>
         );
-      },
-    },
-    {
-      title: 'buff在售价格（最低）',
-      key: 'lowestPriceBuffOrder',
-      width: 180,
-      render: (_, record) => {
-        const price = record?.lowestPriceBuffOrder?.price;
-        return price ? `${price}（${(price / 6.9).toFixed(2)}$）` : '';
       },
     },
     {
@@ -235,7 +333,49 @@ const History: React.FC<unknown> = () => {
       key: 'steamBuyCount',
       width: 100,
     },
+    {
+      title: 'buff在售价格（最低）',
+      key: 'lowestPriceBuffOrder',
+      width: 180,
+      render: (_, record) => {
+        const lowestPriceByLatestMonth = record?.lowestPriceByLatestMonth;
+        const price = record?.lowestPriceBuffOrder?.price;
 
+        // 当前steam最高价，转为人名币
+        const steamHighestBuyPrice = record?.steamHighestBuyPrice;
+        let cardRate = localStorage.getItem('cardRate');
+        cardRate = cardRate ? +cardRate : 6;
+        const steamHighestBuyPriceCN = (
+          steamHighestBuyPrice * cardRate
+        ).toFixed(2);
+
+        // 最近一个月的buff最低价，如果比steam当前最高价还高，则建议购买，标绿
+        const flag = +lowestPriceByLatestMonth > +steamHighestBuyPriceCN;
+
+        return price ? (
+          <p>
+            <span>
+              {price}（{(price / 6.9).toFixed(2)}$）
+            </span>
+            <b style={{ color: flag ? '#52c41a' : '' }}>
+              {lowestPriceByLatestMonth}
+            </b>
+          </p>
+        ) : (
+          ''
+        );
+      },
+    },
+    // {
+    //   title: 'steam求购价（最高）',
+    //   dataIndex: 'steamHighestBuyPrice',
+    //   key: 'steamHighestBuyPrice',
+    //   width: 150,
+    //   render: (_, record) => {
+    //     if (record.highestPriceOfSteam) {
+    //       return record.isHightestPriceOfSteam ?
+    //     }
+    // },
     {
       title: 'buff交易记录',
       width: 180,
@@ -245,7 +385,7 @@ const History: React.FC<unknown> = () => {
             {record.lowestPriceBuffOrder &&
               (getRecommendCount(record) ? (
                 <Space>
-                  <CheckCircleFilled style={{ color: 'green' }} />
+                  <CheckCircleFilled style={{ color: '#52c41a' }} />
                   <b>{record.recommendCount}</b>
                 </Space>
               ) : (
@@ -334,7 +474,7 @@ const History: React.FC<unknown> = () => {
               type="primary"
               onClick={() => getLatestBuffData(record)}
             >
-              Buff实时数据
+              实时数据
             </Button>
             <Button
               size="small"

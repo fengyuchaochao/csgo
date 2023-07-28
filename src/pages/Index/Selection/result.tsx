@@ -155,7 +155,18 @@ const Result: React.FC<{
       const currentDay = moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
       const preDay = moment(currentDay)
         .subtract(1, 'days')
-        .format('YYYY-MM-DD 00:00:00'); // 3天前
+        .format('YYYY-MM-DD 00:00:00'); // 当天
+      if (new Date(order.updated_at * 1000) >= new Date(preDay)) {
+        return order;
+      }
+    });
+
+    // 判断是否都是最近7天的
+    const filterOrderList3 = [...orderList].filter((order, index) => {
+      const currentDay = moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
+      const preDay = moment(currentDay)
+        .subtract(7, 'days')
+        .format('YYYY-MM-DD 00:00:00'); // 7天前
       if (new Date(order.updated_at * 1000) >= new Date(preDay)) {
         return order;
       }
@@ -172,6 +183,8 @@ const Result: React.FC<{
       if (filterOrderList.length >= 8) {
         record.recommendCount = 3;
       } else if (filterOrderList.length >= 5) {
+        record.recommendCount = 1;
+      } else if (filterOrderList3.length >= 8) {
         record.recommendCount = 1;
       } else {
         record.recommendCount = undefined;
@@ -321,7 +334,7 @@ const Result: React.FC<{
             <span>
               {price}（{(price / 6.9).toFixed(2)}$）
             </span>
-            <b style={{ color: flag ? 'green' : '' }}>
+            <b style={{ color: flag ? '#52c41a' : '' }}>
               {lowestPriceByLatestMonth}
             </b>
           </p>
@@ -384,7 +397,7 @@ const Result: React.FC<{
               交易记录：
               {record.recommendCount ? (
                 <Space>
-                  <CheckCircleFilled style={{ color: 'green' }} />
+                  <CheckCircleFilled style={{ color: '#52c41a' }} />
                   <b>{record.recommendCount}</b>
                 </Space>
               ) : (
@@ -397,7 +410,7 @@ const Result: React.FC<{
                 {ratePrice}¥ ({(rate * 100).toFixed(2)}%）
               </b>
               {rate >= 0.15 ? (
-                <CheckCircleFilled style={{ color: 'green' }} />
+                <CheckCircleFilled style={{ color: '#52c41a' }} />
               ) : (
                 <CloseCircleFilled style={{ color: 'red' }} />
               )}
