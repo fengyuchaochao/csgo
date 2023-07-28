@@ -153,7 +153,7 @@ const History: React.FC<unknown> = () => {
       record.steamBuyPrice >= record.steamHighestBuyPrice;
   };
 
-  const toUpdateGood = (record) => {
+  const toUpdateGood = async (record) => {
     setCurrentGood(record);
     form.setFieldsValue({
       steamBuyPrice: record.steamBuyPrice,
@@ -161,6 +161,9 @@ const History: React.FC<unknown> = () => {
     });
     setOpen(true);
   };
+  useEffect(() => {
+    changeRate();
+  }, [currentGood]);
 
   const updateGood = async () => {
     const formData = form.getFieldValue();
@@ -286,6 +289,7 @@ const History: React.FC<unknown> = () => {
         );
       },
     },
+
     {
       title: '单件成本',
       width: 100,
@@ -294,31 +298,24 @@ const History: React.FC<unknown> = () => {
           <p>
             <span>{(record.steamBuyPrice * cardRate).toFixed(2)}</span>
             <span>（{record.steamBuyPrice}$）</span>
-
-            {record?.isHighestPriceOfSteam !== undefined &&
-              (record.isHighestPriceOfSteam ? (
-                <CheckCircleFilled style={{ color: '#52c41a' }} />
-              ) : (
-                <CloseCircleFilled style={{ color: 'red' }} />
-              ))}
           </p>
         );
       },
     },
     {
       title: '单件利润',
-      dataIndex: '',
-      key: '',
       width: 100,
       render: (_, record) => {
+        // 利润
         if (!record?.lowestPriceBuffOrder) return;
         const steamBuyPrice = (record.steamBuyPrice * cardRate).toFixed(2);
         const lowestPriceBuffOrder = record?.lowestPriceBuffOrder?.price;
         const rateValue = (lowestPriceBuffOrder - +steamBuyPrice).toFixed(2);
         const rate = (+rateValue / +steamBuyPrice).toFixed(2);
+
         return (
           <b>
-            <Typography.Text type={+rate > 0.2 ? 'success' : 'default'}>
+            <Typography.Text type={+rate > 0.15 ? 'success' : 'default'}>
               {rateValue}（{(+rate * 100).toFixed(2)}%）
             </Typography.Text>
           </b>
@@ -364,32 +361,70 @@ const History: React.FC<unknown> = () => {
         );
       },
     },
-    // {
-    //   title: 'steam求购价（最高）',
-    //   dataIndex: 'steamHighestBuyPrice',
-    //   key: 'steamHighestBuyPrice',
-    //   width: 150,
-    //   render: (_, record) => {
-    //     if (record.highestPriceOfSteam) {
-    //       return record.isHightestPriceOfSteam ?
-    //     }
-    // },
     {
-      title: 'buff交易记录',
-      width: 180,
+      title: 'steam求购价（最高）',
+      dataIndex: 'steamHighestBuyPrice',
+      key: 'steamHighestBuyPrice',
+      width: 150,
       render: (_, record) => {
+        const steamHighestBuyPrice = record?.steamHighestBuyPrice;
+        let cardRate = localStorage.getItem('cardRate');
+        cardRate = cardRate ? +cardRate : 6;
+        const steamHighestBuyPriceCN = (
+          steamHighestBuyPrice * cardRate
+        ).toFixed(2);
+        return steamHighestBuyPrice
+          ? `${steamHighestBuyPriceCN}(${steamHighestBuyPrice}$)`
+          : '';
+      },
+    },
+    {
+      title: '是否符合条件',
+      width: 280,
+      render: (_, record) => {
+        if (!record.lowestPriceBuffOrder || !record.steamLowestSellPrice)
+          return;
+        const buffLowestPriceCN = record?.lowestPriceBuffOrder?.price; //buff在售最低价格
+        const steamHighestBuyPrice = record?.steamHighestBuyPrice;
+        const steamCostPriceCN = steamHighestBuyPrice * cardRate;
+        const ratePrice = Number(
+          (buffLowestPriceCN - steamCostPriceCN).toFixed(2),
+        );
+        const rate = Number((ratePrice / steamCostPriceCN).toFixed(4));
         return (
-          <div>
-            {record.lowestPriceBuffOrder &&
-              (getRecommendCount(record) ? (
-                <Space>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <b>{record.recommendCount}</b>
-                </Space>
+          <Space>
+            <span>
+              交易记录：
+              {record.lowestPriceBuffOrder &&
+                (getRecommendCount(record) ? (
+                  <Space>
+                    <CheckCircleFilled style={{ color: '#52c41a' }} />
+                    <b>{record.recommendCount}</b>
+                  </Space>
+                ) : (
+                  <CloseCircleFilled style={{ color: 'red' }} />
+                ))}
+            </span>
+            <span>
+              利润：
+              <b>
+                {ratePrice}¥ ({(rate * 100).toFixed(2)}%）
+              </b>
+              {rate >= 0.15 ? (
+                <CheckCircleFilled style={{ color: '#52c41a' }} />
               ) : (
                 <CloseCircleFilled style={{ color: 'red' }} />
-              ))}
-          </div>
+              )}
+            </span>
+            <span>
+              是否是Steam第一位：
+              {record.isHighestPriceOfSteam ? (
+                <CheckCircleFilled style={{ color: '#52c41a' }} />
+              ) : (
+                <CloseCircleFilled style={{ color: 'red' }} />
+              )}
+            </span>
+          </Space>
         );
       },
     },
