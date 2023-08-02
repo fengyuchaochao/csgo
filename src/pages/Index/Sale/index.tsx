@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   Space,
   Table,
@@ -9,6 +9,7 @@ import {
   Tag,
   Radio,
   Select,
+  InputNumber,
 } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import copy from 'copy-to-clipboard';
@@ -100,11 +101,12 @@ const Sale: React.FC<unknown> = () => {
         const lowestBuffPrice = record?.lowestPriceBuffOrder?.price;
         const price = record.steamBuyPrice * cardRate; // 成本
 
-        const rate = (((lowestBuffPrice - price) / price) * 100).toFixed(2);
+        const ratePrice = (lowestBuffPrice - price).toFixed(2);
+        const ratePercent = ((+ratePrice / price) * 100).toFixed(2);
         if (!lowestBuffPrice) return;
         return (
           <span>
-            {lowestBuffPrice}（{rate}%）
+            {lowestBuffPrice}（{ratePrice}）（{ratePercent}%）
           </span>
         );
       },
@@ -114,13 +116,19 @@ const Sale: React.FC<unknown> = () => {
       render: (_, record) => {
         const castPrice = record?.steamBuyPrice * cardRate;
         const curPrice = record?.myOrder?.price;
+
+        const ratePrice = (curPrice - castPrice).toFixed(2);
+        const ratePercent = (
+          ((curPrice - castPrice) / castPrice) *
+          100
+        ).toFixed(2);
         if (!curPrice) return;
         return (
           <p>
             <span>{curPrice}</span>
             {castPrice && (
               <span>
-                ({(((curPrice - castPrice) / castPrice) * 100).toFixed(2)} %)
+                （{ratePrice}）（{ratePercent} %）
               </span>
             )}
           </p>
@@ -192,6 +200,25 @@ const Sale: React.FC<unknown> = () => {
   const localCardRate = localStorage.getItem('cardRate');
   const cardRate = localCardRate ? +localCardRate : 6;
 
+  // 总结数据
+  const [summaryStartIndex, setSummaryStartIndex] = useState(0);
+  const [summaryEndIndex, setSummaryEndIndex] = useState(goodList.length - 1);
+  const summaryData = useMemo(
+    (data) => {
+      const filterGoodList = goodList.slice(summaryStartIndex, summaryEndIndex);
+      // 总成本
+      const totalPrice = filterGoodList.reduce((total, current) => {
+        console.log(123123, current.steamBuyPrice);
+        const price = +(current.steamBuyPrice * cardRate).toFixed(2);
+        return total + price;
+      }, 0);
+      return {
+        totalPrice,
+      };
+    },
+    [goodList, summaryStartIndex, summaryEndIndex],
+  );
+
   // 获取单价饰品的成本
   const getCostPriceByGoodId = async (goodId, item) => {
     const url = `/local/api/good/detail?goodId=${goodId}`;
@@ -240,6 +267,7 @@ const Sale: React.FC<unknown> = () => {
       return item;
     });
     setGoodList(goodList);
+    setSummaryEndIndex(goodList.length);
 
     // 控制并发数量，每隔5秒，发送4个请求
     // goodList.forEach((item) => {
@@ -431,12 +459,40 @@ const Sale: React.FC<unknown> = () => {
           搜索
         </Button>
       </Space>
+      <Space>
+        <div>
+          从
+          <InputNumber
+            value={summaryStartIndex}
+            onChange={(value) => {
+              setSummaryStartIndex(value);
+            }}
+          />
+          到
+          <InputNumber
+            value={summaryEndIndex}
+            onChange={(value) => {
+              setSummaryEndIndex(value);
+            }}
+          />
+          记录， 总共 <b>{summaryEndIndex - summaryStartIndex}</b> 件，
+          总成本为：<b>{summaryData?.totalPrice}</b>， buff总利润为：
+          在售利润为：
+        </div>
+      </Space>
       <Table
         size="small"
         rowKey="index"
         columns={columns}
         dataSource={goodList}
         scroll={{ x: 1300 }}
+        pagination={{
+          position: ['topRight'],
+          pageSize: 1000,
+          showTotal: (total) => {
+            return `共 ${total} 条`;
+          },
+        }}
       />
     </>
   );
