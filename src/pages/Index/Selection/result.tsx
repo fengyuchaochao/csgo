@@ -8,6 +8,7 @@ import {
   CheckOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
+import { useModel } from '@umijs/max';
 import moment from 'moment';
 import copy from 'copy-to-clipboard';
 
@@ -22,11 +23,13 @@ const Result: React.FC<{
     item.index = index;
   });
 
+  const { getCurrentBuffUserId, getCardRate } = useModel('commonModel');
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const initSteamBuyForm = {
     steamBuyPrice: undefined,
     steamBuyCount: undefined,
+    cardRate: getCardRate(),
   };
 
   // 根据饰品名获取饰品的基本信息（主要是饰品ID）
@@ -242,6 +245,10 @@ const Result: React.FC<{
   };
   let [currentGood, setCurrentGood] = useState(null);
   const toSaveGood = (record) => {
+    if (record.isRecentlyExisted) {
+      message.warning('7天以内，已订购过该饰品，不允许重复订购');
+      return;
+    }
     setCurrentGood(record);
     form.resetFields();
 
@@ -260,8 +267,10 @@ const Result: React.FC<{
     const body = {
       steamBuyPrice: params.steamBuyPrice,
       steamBuyCount: params.steamBuyCount,
+      cardRate: params.cardRate,
       goodName: currentGood.name,
       goodId: currentGood.goodId,
+      buffUserId: getCurrentBuffUserId(),
       rawData: currentGood,
     };
 
@@ -495,6 +504,9 @@ const Result: React.FC<{
           </Form.Item>
           <Form.Item label="购买数量" name="steamBuyCount">
             <InputNumber />
+          </Form.Item>
+          <Form.Item label="卡价" name="cardRate">
+            <InputNumber step={0.05} />
           </Form.Item>
         </Form>
       </Modal>

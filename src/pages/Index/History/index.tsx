@@ -1,4 +1,4 @@
-import { Badge } from 'antd';
+import { Badge, Tag } from 'antd';
 import { PageContainer } from '@ant-design/pro-components';
 import {
   Modal,
@@ -21,18 +21,15 @@ import {
 } from '@ant-design/icons';
 import copy from 'copy-to-clipboard';
 import moment from 'moment';
+import { useModel } from '@umijs/max';
 
 const copyName = (text) => {
   copy(text);
   message.success('复制成功');
 };
 const History: React.FC<unknown> = () => {
-  const localCardRate = localStorage.getItem('cardRate');
-  if (!localCardRate) {
-    localStorage.setItem('cardRate', 6);
-  }
+  const { getCardRate } = useModel('commonModel');
   const [keyword, setKeyword] = useState('');
-  const [cardRate, setCardRate] = useState(localStorage.getItem('cardRate'));
   const [goodList, setGoodList] = useState([]);
   const [currentGood, setCurrentGood] = useState(null);
   const [open, setOpen] = useState(false);
@@ -294,10 +291,12 @@ const History: React.FC<unknown> = () => {
       title: '单件成本',
       width: 100,
       render: (_, record) => {
+        const cardRate = record.cardRate || getCardRate();
         return (
           <p>
             <span>{(record.steamBuyPrice * cardRate).toFixed(2)}</span>
             <span>（{record.steamBuyPrice}$）</span>
+            <Tag color="processing">{cardRate}</Tag>
           </p>
         );
       },
@@ -308,6 +307,7 @@ const History: React.FC<unknown> = () => {
       render: (_, record) => {
         // 利润
         if (!record?.lowestPriceBuffOrder) return;
+        const cardRate = record.cardRate || getCardRate();
         const steamBuyPrice = (record.steamBuyPrice * cardRate).toFixed(2);
         const lowestPriceBuffOrder = record?.lowestPriceBuffOrder?.price;
         const rateValue = (lowestPriceBuffOrder - +steamBuyPrice).toFixed(2);
@@ -338,8 +338,7 @@ const History: React.FC<unknown> = () => {
 
         // 当前steam最高价，转为人名币
         const steamHighestBuyPrice = record?.steamHighestBuyPrice;
-        let cardRate = localStorage.getItem('cardRate');
-        cardRate = cardRate ? +cardRate : 6;
+        const cardRate = record.cardRate || getCardRate();
         const steamHighestBuyPriceCN = (
           steamHighestBuyPrice * cardRate
         ).toFixed(2);
@@ -368,8 +367,8 @@ const History: React.FC<unknown> = () => {
       width: 150,
       render: (_, record) => {
         const steamHighestBuyPrice = record?.steamHighestBuyPrice;
-        let cardRate = localStorage.getItem('cardRate');
-        cardRate = cardRate ? +cardRate : 6;
+
+        const cardRate = record.cardRate || getCardRate();
         const steamHighestBuyPriceCN = (
           steamHighestBuyPrice * cardRate
         ).toFixed(2);
@@ -384,6 +383,7 @@ const History: React.FC<unknown> = () => {
       render: (_, record) => {
         if (!record.lowestPriceBuffOrder || !record.steamLowestSellPrice)
           return;
+        const cardRate = record.cardRate || getCardRate();
         const buffLowestPriceCN = record?.lowestPriceBuffOrder?.price; //buff在售最低价格
         const steamHighestBuyPrice = record?.steamHighestBuyPrice;
         const steamCostPriceCN = steamHighestBuyPrice * cardRate;
@@ -556,6 +556,7 @@ const History: React.FC<unknown> = () => {
   const changeRate = () => {
     const formData = form.getFieldValue();
     if (!currentGood?.lowestPriceBuffOrder) return;
+    const cardRate = currentGood.cardRate || getCardRate();
     const steamBuyPrice = (formData.steamBuyPrice * cardRate).toFixed(2);
     const lowestPriceBuffOrder = currentGood?.lowestPriceBuffOrder?.price;
     const rateValue = (lowestPriceBuffOrder - +steamBuyPrice).toFixed(2);
@@ -615,17 +616,6 @@ const History: React.FC<unknown> = () => {
           size="large"
           style={{ width: 700 }}
           onChange={search}
-        />
-        <InputNumber
-          defaultValue={cardRate}
-          placeholder="卡价利率"
-          size="large"
-          step={0.1}
-          style={{ width: 80 }}
-          onChange={(value) => {
-            setCardRate(value);
-            localStorage.setItem('cardRate', value);
-          }}
         />
         <Button
           size="large"

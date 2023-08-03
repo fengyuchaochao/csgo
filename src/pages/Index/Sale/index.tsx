@@ -10,8 +10,12 @@ import {
   Radio,
   Select,
   InputNumber,
+  Badge,
+  Statistic,
+  Divider,
 } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
+import { useModel } from '@umijs/max';
 import copy from 'copy-to-clipboard';
 import pLimit from 'p-limit';
 const limit = pLimit(3);
@@ -27,7 +31,6 @@ const getCookie = (name) => {
   return cookie[1];
 };
 
-const userIdList = ['U1107099955', 'U1106913112'];
 const priceRateList = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
 const stateList = [
   {
@@ -136,6 +139,12 @@ const Sale: React.FC<unknown> = () => {
       },
     },
     {
+      title: '状态',
+      render: (_, record) => {
+        return <Badge color="geekblue" text={record.state_toast} />;
+      },
+    },
+    {
       title: '排名',
       render: (_, record) => {
         return (
@@ -182,6 +191,7 @@ const Sale: React.FC<unknown> = () => {
     },
   ];
 
+  const { getCurrentBuffUserId } = useModel('commonModel');
   const [goodList, setGoodList] = useState([]);
   const goodListRef = useRef();
   const requestPool = [];
@@ -194,30 +204,83 @@ const Sale: React.FC<unknown> = () => {
     search: '',
     state: '',
     force: 0,
-    userId: 'U1107099955',
+    userId: getCurrentBuffUserId(),
     rate: 0.05,
   });
   const localCardRate = localStorage.getItem('cardRate');
   const cardRate = localCardRate ? +localCardRate : 6;
 
   // 总结数据
-  const [summaryStartIndex, setSummaryStartIndex] = useState(0);
-  const [summaryEndIndex, setSummaryEndIndex] = useState(goodList.length - 1);
-  const summaryData = useMemo(
-    (data) => {
-      const filterGoodList = goodList.slice(summaryStartIndex, summaryEndIndex);
-      // 总成本
-      const totalPrice = filterGoodList.reduce((total, current) => {
-        console.log(123123, current.steamBuyPrice);
-        const price = +(current.steamBuyPrice * cardRate).toFixed(2);
-        return total + price;
-      }, 0);
-      return {
-        totalPrice,
-      };
-    },
-    [goodList, summaryStartIndex, summaryEndIndex],
-  );
+  const [showSummaryData, setShowSummaryData] = useState(false);
+  const [summaryData, setSummaryData] = useState(null);
+  const [summaryStartIndex, setSummaryStartIndex] = useState(1);
+  const [summaryEndIndex, setSummaryEndIndex] = useState(1);
+
+  // 获取最终统计数据
+  const getSummaryData = () => {
+    const filterGoodList = goodList.slice(
+      summaryStartIndex - 1,
+      summaryEndIndex,
+    );
+    // 总成本
+    const totalPrice = filterGoodList.reduce((total, current) => {
+      const price = +(current.steamBuyPrice * cardRate).toFixed(2);
+      return total + price;
+    }, 0);
+
+    // buff总价格
+    const totalBuffPrice = filterGoodList.reduce((total, current) => {
+      const lowestBuffPrice = current?.lowestPriceBuffOrder?.price;
+      return total + +lowestBuffPrice;
+    }, 0);
+
+    // buff总利润
+    const totalBuffProfit = filterGoodList.reduce((total, current) => {
+      const lowestBuffPrice = current?.lowestPriceBuffOrder?.price;
+      const price = current.steamBuyPrice * cardRate;
+      const ratePrice = (lowestBuffPrice - price).toFixed(2);
+
+      return total + +ratePrice;
+    }, 0);
+
+    // buff总利润率
+    const totalBuffProfitRate = (totalBuffProfit / totalPrice) * 100;
+
+    // 在售总价格
+    const totalMyPrice = filterGoodList.reduce((total, current) => {
+      const curPrice = current?.myOrder?.price;
+      return total + +curPrice;
+    }, 0);
+
+    // 在售总利润
+    const totalMyProfit = totalMyPrice - totalPrice;
+
+    // 在售总利润率
+    const totalMyProfitRate = (totalMyProfit / totalPrice) * 100;
+
+    setShowSummaryData(true);
+    setSummaryData({
+      totalPrice,
+      totalBuffPrice,
+      totalBuffProfit,
+      totalBuffProfitRate,
+      totalMyPrice,
+      totalMyProfit,
+      totalMyProfitRate,
+    });
+  };
+
+  // 根据利润率显示不同的颜色
+  const getSummaryColor = (rate) => {
+    if (!rate) return '';
+    if (rate >= 15) {
+      return '#3f8600';
+    } else if (rate < 15 && rate >= 0) {
+      return '';
+    } else if (rate < 0) {
+      return '#cf1322';
+    }
+  };
 
   // 获取单价饰品的成本
   const getCostPriceByGoodId = async (goodId, item) => {
@@ -268,26 +331,24 @@ const Sale: React.FC<unknown> = () => {
     });
     setGoodList(goodList);
     setSummaryEndIndex(goodList.length);
+  };
 
+  const getBatchBuffRank = async () => {
     // 控制并发数量，每隔5秒，发送4个请求
-    // goodList.forEach((item) => {
-    //   requestPool.push(
-    //     limit(() => {
-    //       return new Promise(async (resolve) => {
-    //         await getCostPriceByGoodId(item.goods_id, item);
-    //         await getBuffRank(item.goods_id, item);
-    //         await updatePrice(item);
-    //         await getBuffRank(item.goods_id, item);
-
-    //         setTimeout(() => {
-    //           resolve();
-    //         }, 5000);
-    //       });
-    //     }),
-    //   );
-    // });
-
-    // await Promise.all(requestPool);
+    goodList.forEach((item) => {
+      requestPool.push(
+        limit(() => {
+          return new Promise(async (resolve) => {
+            await getCostPriceByGoodId(item.goods_id, item);
+            await getBuffRank(item.goods_id, item);
+            setTimeout(() => {
+              resolve();
+            }, 5000);
+          });
+        }),
+      );
+    });
+    await Promise.all(requestPool);
   };
 
   const updatePrice = async (record) => {
@@ -382,12 +443,7 @@ const Sale: React.FC<unknown> = () => {
     await getBuffRank(record.goods_id, record);
     message.destroy();
   };
-  const changeUserId = ({ target: { value } }) => {
-    setSearchFormData({
-      ...searchFormData,
-      userId: value,
-    });
-  };
+
   const changeState = (value) => {
     setSearchFormData({
       ...searchFormData,
@@ -416,70 +472,136 @@ const Sale: React.FC<unknown> = () => {
     };
   }, []);
   useEffect(() => {
-    // getGoodListBySale();
+    getGoodListBySale();
   }, []);
 
   useEffect(() => {
     goodListRef.current = goodList;
   }, [goodList]);
+
   return (
     <>
       <Space style={{ marginBottom: '12px' }}>
-        <Input
-          value={searchFormData.search}
-          placeholder="输入饰品名"
-          allowClear
-          style={{ width: 700 }}
-          size="large"
-          onChange={changeKeyword}
-        />
-        <Select
-          size="large"
-          style={{ width: '100px' }}
-          defaultValue={searchFormData.state}
-          options={stateList}
-          onChange={changeState}
-        ></Select>
-        <Radio.Group
-          size="large"
-          options={userIdList.map((item) => ({ label: item, value: item }))}
-          value={searchFormData.userId}
-          onChange={changeUserId}
-          optionType="button"
-          buttonStyle="solid"
-        ></Radio.Group>
-        <Select
-          size="large"
-          style={{ width: '100px' }}
-          defaultValue={searchFormData.rate}
-          options={priceRateList.map((item) => ({ value: item, label: item }))}
-          onChange={changePriceRate}
-        ></Select>
-        <Button type="primary" size="large" onClick={getGoodListBySale}>
-          搜索
-        </Button>
-      </Space>
-      <Space>
-        <div>
-          从
-          <InputNumber
-            value={summaryStartIndex}
-            onChange={(value) => {
-              setSummaryStartIndex(value);
-            }}
+        <Space.Compact size="large">
+          <Input
+            value={searchFormData.search}
+            placeholder="输入饰品名"
+            allowClear
+            style={{ width: 600 }}
+            size="large"
+            onChange={changeKeyword}
           />
-          到
-          <InputNumber
-            value={summaryEndIndex}
-            onChange={(value) => {
-              setSummaryEndIndex(value);
-            }}
-          />
-          记录， 总共 <b>{summaryEndIndex - summaryStartIndex}</b> 件，
-          总成本为：<b>{summaryData?.totalPrice}</b>， buff总利润为：
-          在售利润为：
-        </div>
+          <Select
+            size="large"
+            style={{ width: '100px' }}
+            defaultValue={searchFormData.state}
+            options={stateList}
+            onChange={changeState}
+          ></Select>
+          <Select
+            size="large"
+            style={{ width: '100px' }}
+            defaultValue={searchFormData.rate}
+            options={priceRateList.map((item) => ({
+              value: item,
+              label: item,
+            }))}
+            onChange={changePriceRate}
+          ></Select>
+          <Button type="primary" size="large" onClick={getGoodListBySale}>
+            搜索
+          </Button>
+        </Space.Compact>
       </Space>
+
+      <div style={{ marginBottom: '12px' }}>
+        <Space>
+          <Button type="primary" onClick={getBatchBuffRank}>
+            批量获取实时排名
+          </Button>
+          <Space.Compact>
+            <InputNumber
+              value={summaryStartIndex}
+              onChange={(value) => {
+                setSummaryStartIndex(value);
+              }}
+            />
+            <InputNumber
+              value={summaryEndIndex}
+              onChange={(value) => {
+                setSummaryEndIndex(value);
+              }}
+            />
+            <Button type="primary" size="large" onClick={getSummaryData}>
+              统计
+            </Button>
+            <Button size="large" onClick={() => setShowSummaryData(false)}>
+              隐藏
+            </Button>
+          </Space.Compact>
+        </Space>
+      </div>
+      <div>
+        {showSummaryData && (
+          <Space size={32} style={{ marginBottom: '12px' }}>
+            <Statistic
+              title="总件数"
+              value={summaryEndIndex - summaryStartIndex + 1}
+            />
+            <Statistic
+              title="总成本"
+              value={summaryData?.totalPrice || undefined}
+              precision={2}
+            />
+            <Divider />
+            <Statistic
+              title="Buff总价格"
+              value={summaryData?.totalBuffPrice || undefined}
+              precision={2}
+            />
+            <Statistic
+              title="Buff总利润"
+              value={summaryData?.totalBuffProfit || undefined}
+              precision={2}
+              valueStyle={{
+                color: getSummaryColor(summaryData?.totalBuffProfitRate),
+              }}
+            />
+            <Statistic
+              title="Buff总利润率"
+              value={summaryData?.totalBuffProfitRate || undefined}
+              precision={2}
+              suffix="%"
+              valueStyle={{
+                color: getSummaryColor(summaryData?.totalBuffProfitRate),
+              }}
+            />
+            <Divider />
+            <Statistic
+              title="在售总价格"
+              value={summaryData?.totalMyPrice || undefined}
+              precision={2}
+            />
+            <Statistic
+              title="在售总利润"
+              value={summaryData?.totalMyProfit || undefined}
+              precision={2}
+              valueStyle={{
+                color: getSummaryColor(summaryData?.totalMyProfitRate),
+              }}
+            />
+            <Statistic
+              title="在售总利润率"
+              value={summaryData?.totalMyProfitRate || undefined}
+              precision={2}
+              suffix="%"
+              valueStyle={{
+                color: getSummaryColor(summaryData?.totalMyProfitRate),
+              }}
+            />
+          </Space>
+        )}
+      </div>
       <Table
         size="small"
         rowKey="index"
@@ -487,7 +609,6 @@ const Sale: React.FC<unknown> = () => {
         dataSource={goodList}
         scroll={{ x: 1300 }}
         pagination={{
-          position: ['topRight'],
           pageSize: 1000,
           showTotal: (total) => {
             return `共 ${total} 条`;
