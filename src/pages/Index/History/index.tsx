@@ -28,7 +28,8 @@ const copyName = (text) => {
   message.success('复制成功');
 };
 const History: React.FC<unknown> = () => {
-  const { getCardRate } = useModel('commonModel');
+  const { getCardRate, getCurrentBuffUserId, getBuffUserIdList } =
+    useModel('commonModel');
   const [keyword, setKeyword] = useState('');
   const [goodList, setGoodList] = useState([]);
   const [currentGood, setCurrentGood] = useState(null);
@@ -566,9 +567,11 @@ const History: React.FC<unknown> = () => {
   };
 
   const getHistoryList = async (keyword) => {
-    let url = `/local/api/good/list`;
+    const userId = getCurrentBuffUserId();
+    const userIdList = getBuffUserIdList();
+    let url = `/local/api/good/list?userId=${userId}`;
     if (keyword) {
-      url = url + `?goodName=${keyword}`;
+      url = url + `&goodName=${keyword}`;
     }
     await fetch(url, {
       method: 'get',
@@ -576,7 +579,17 @@ const History: React.FC<unknown> = () => {
       .then((response) => response.json())
       .then((data) => {
         const { list = [] } = data;
-        setGoodList(list);
+        // setGoodList(list);
+        console.log(123123123123, list);
+        setGoodList(
+          list.filter((item) => {
+            if (userId === userIdList[0]) {
+              return item.buffUserId === userId || !item.buffUserId;
+            } else {
+              return item.buffUserId === userId;
+            }
+          }),
+        );
       });
   };
   const search = async (e) => {
@@ -622,7 +635,7 @@ const History: React.FC<unknown> = () => {
           type="primary"
           onClick={() => getHistoryList(keyword)}
         >
-          刷新
+          搜索
         </Button>
       </Space>
       <Table

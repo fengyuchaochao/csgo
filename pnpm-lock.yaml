@@ -16,6 +16,9 @@ dependencies:
   copy-to-clipboard:
     specifier: ^3.3.3
     version: 3.3.3
+  dayjs:
+    specifier: ^1.11.9
+    version: 1.11.9
   moment:
     specifier: ^2.29.4
     version: 2.29.4
@@ -300,7 +303,7 @@ packages:
       '@chenshuai2144/sketch-color': 1.0.9(react@16.14.0)
       antd: 4.24.8(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       lodash.tonumber: 4.0.3
       omit.js: 2.0.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@16.14.0)
@@ -324,7 +327,7 @@ packages:
       '@chenshuai2144/sketch-color': 1.0.9(react@16.14.0)
       antd: 5.4.0(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       lodash.tonumber: 4.0.3
       omit.js: 2.0.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@16.14.0)
@@ -477,7 +480,7 @@ packages:
       '@babel/runtime': 7.21.0
       antd: 4.24.8(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@16.14.0)
       rc-util: 4.21.1
       react: 16.14.0
@@ -503,7 +506,7 @@ packages:
       '@babel/runtime': 7.21.0
       antd: 5.4.0(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@16.14.0)
       rc-util: 4.21.1
       react: 16.14.0
@@ -594,7 +597,7 @@ packages:
       '@babel/runtime': 7.21.0
       antd: 4.24.8(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       omit.js: 2.0.2
       rc-field-form: 1.29.1(react-dom@17.0.2)(react@16.14.0)
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@16.14.0)
@@ -625,7 +628,7 @@ packages:
       '@babel/runtime': 7.21.0
       antd: 5.4.0(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       omit.js: 2.0.2
       rc-field-form: 1.29.1(react-dom@17.0.2)(react@16.14.0)
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@16.14.0)
@@ -651,7 +654,7 @@ packages:
       '@babel/runtime': 7.21.0
       antd: 4.24.8(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       rc-util: 5.29.3(react-dom@17.0.2)(react@16.14.0)
       react: 16.14.0
       react-dom: 17.0.2(react@16.14.0)
@@ -673,7 +676,7 @@ packages:
       '@babel/runtime': 7.21.0
       antd: 5.4.0(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       rc-util: 5.29.3(react-dom@17.0.2)(react@16.14.0)
       react: 16.14.0
       react-dom: 17.0.2(react@16.14.0)
@@ -4041,10 +4044,10 @@ packages:
       '@tanstack/react-query-devtools': 4.29.0(@tanstack/react-query@4.28.0)(react-dom@17.0.2)(react@16.14.0)
       '@umijs/bundler-utils': 4.0.64
       '@umijs/valtio': 1.0.3(react@16.14.0)
-      antd-dayjs-webpack-plugin: 1.0.6(dayjs@1.11.7)
+      antd-dayjs-webpack-plugin: 1.0.6(dayjs@1.11.9)
       axios: 0.27.2
       babel-plugin-import: 1.13.6
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       dva-core: 2.0.4(redux@3.7.2)
       dva-immer: 1.0.0(dva@2.5.0-beta.2)
       dva-loading: 3.0.23(dva-core@2.0.4)
@@ -4460,12 +4463,12 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /antd-dayjs-webpack-plugin@1.0.6(dayjs@1.11.7):
+  /antd-dayjs-webpack-plugin@1.0.6(dayjs@1.11.9):
     resolution: {integrity: sha512-UlK3BfA0iE2c5+Zz/Bd2iPAkT6cICtrKG4/swSik5MZweBHtgmu1aUQCHvICdiv39EAShdZy/edfP6mlkS/xXg==}
     peerDependencies:
       dayjs: '*'
     dependencies:
-      dayjs: 1.11.7
+      dayjs: 1.11.9
     dev: false
 
   /antd@4.24.8(react-dom@17.0.2)(react@16.14.0):
@@ -4538,7 +4541,7 @@ packages:
       '@rc-component/trigger': 1.7.1(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
       copy-to-clipboard: 3.3.3
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       qrcode.react: 3.1.0(react@16.14.0)
       rc-cascader: 3.10.1(react-dom@17.0.2)(react@16.14.0)
       rc-checkbox: 3.0.0(react-dom@17.0.2)(react@16.14.0)
@@ -4555,7 +4558,7 @@ packages:
       rc-motion: 2.6.3(react-dom@17.0.2)(react@16.14.0)
       rc-notification: 5.0.3(react-dom@17.0.2)(react@16.14.0)
       rc-pagination: 3.3.1(react-dom@17.0.2)(react@16.14.0)
-      rc-picker: 3.5.1(dayjs@1.11.7)(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0)
+      rc-picker: 3.5.1(dayjs@1.11.9)(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0)
       rc-progress: 3.4.1(react-dom@17.0.2)(react@16.14.0)
       rc-rate: 2.10.0(react-dom@17.0.2)(react@16.14.0)
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@16.14.0)
@@ -5510,8 +5513,8 @@ packages:
     engines: {node: '>=0.11'}
     dev: false
 
-  /dayjs@1.11.7:
-    resolution: {integrity: sha512-+Yw9U6YO5TQohxLcIkrXBeY73WP3ejHWVvx8XCk3gxvQDCTEmS48ZrSZCKciI7Bhl/uCMyxYtE9UqRILmFphkQ==}
+  /dayjs@1.11.9:
+    resolution: {integrity: sha512-QvzAURSbQ0pKdIye2txOzNaHmxtUBXerpY0FJsFXUMKbIZeFm5ht1LS/jFsrncjnmtv8HsG0W2g6c0zUjZWmpA==}
     dev: false
 
   /debug@3.2.7:
@@ -9436,7 +9439,7 @@ packages:
       '@babel/runtime': 7.21.0
       classnames: 2.3.2
       date-fns: 2.29.3
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       moment: 2.29.4
       rc-trigger: 5.3.4(react-dom@17.0.2)(react@16.14.0)
       rc-util: 5.29.3(react-dom@17.0.2)(react@16.14.0)
@@ -9445,7 +9448,7 @@ packages:
       shallowequal: 1.1.0
     dev: false
 
-  /rc-picker@3.5.1(dayjs@1.11.7)(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0):
+  /rc-picker@3.5.1(dayjs@1.11.9)(moment@2.29.4)(react-dom@17.0.2)(react@16.14.0):
     resolution: {integrity: sha512-T/rqhB2IVU014k14x713JGzHCUT56YEYsGkUT8vBVOANdoRCe18oN/8zdeWYB/7mQRTTHJ1vCSPnxOowjLyN8Q==}
     engines: {node: '>=8.x'}
     peerDependencies:
@@ -9468,7 +9471,7 @@ packages:
       '@babel/runtime': 7.21.0
       '@rc-component/trigger': 1.7.1(react-dom@17.0.2)(react@16.14.0)
       classnames: 2.3.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       moment: 2.29.4
       rc-util: 5.29.3(react-dom@17.0.2)(react@16.14.0)
       react: 16.14.0

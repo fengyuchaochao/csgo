@@ -16,6 +16,7 @@
     "@umijs/max": "^4.0.64",
     "antd": "^5.0.0",
     "copy-to-clipboard": "^3.3.3",
+    "dayjs": "^1.11.9",
     "moment": "^2.29.4",
     "react-router-dom": "^6.10.0",
     "react-router6-prompt": "^1.1.0"

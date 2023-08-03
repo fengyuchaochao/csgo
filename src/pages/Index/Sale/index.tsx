@@ -15,6 +15,7 @@ import {
   Divider,
 } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { useModel } from '@umijs/max';
 import copy from 'copy-to-clipboard';
 import pLimit from 'p-limit';
@@ -141,7 +142,16 @@ const Sale: React.FC<unknown> = () => {
     {
       title: '状态',
       render: (_, record) => {
-        return <Badge color="geekblue" text={record.state_toast} />;
+        return (
+          <Space>
+            <Badge color="geekblue" text={record.state_toast} />
+            <span>
+              {dayjs(record?.tradable_time * 1000).format(
+                'YYYY-MM-DD HH:mm:ss',
+              )}
+            </span>
+          </Space>
+        );
       },
     },
     {
@@ -215,6 +225,9 @@ const Sale: React.FC<unknown> = () => {
   const [summaryData, setSummaryData] = useState(null);
   const [summaryStartIndex, setSummaryStartIndex] = useState(1);
   const [summaryEndIndex, setSummaryEndIndex] = useState(1);
+
+  const [batchStartIndex, setBatchStartIndex] = useState(1);
+  const [batchEndIndex, setBatchEndIndex] = useState(1);
 
   // 获取最终统计数据
   const getSummaryData = () => {
@@ -331,11 +344,12 @@ const Sale: React.FC<unknown> = () => {
     });
     setGoodList(goodList);
     setSummaryEndIndex(goodList.length);
+    setBatchEndIndex(goodList.length);
   };
 
   const getBatchBuffRank = async () => {
     // 控制并发数量，每隔5秒，发送4个请求
-    goodList.forEach((item) => {
+    goodList.slice(batchStartIndex - 1, batchEndIndex).forEach((item) => {
       requestPool.push(
         limit(() => {
           return new Promise(async (resolve) => {
@@ -516,9 +530,24 @@ const Sale: React.FC<unknown> = () => {
 
       <div style={{ marginBottom: '12px' }}>
         <Space>
-          <Button type="primary" onClick={getBatchBuffRank}>
-            批量获取实时排名
-          </Button>
+          <Space.Compact>
+            <InputNumber
+              value={batchStartIndex}
+              onChange={(value) => {
+                setBatchStartIndex(value);
+              }}
+            />
+            <InputNumber
+              value={batchEndIndex}
+              onChange={(value) => {
+                setBatchEndIndex(value);
+              }}
+            />
+            <Button type="primary" onClick={getBatchBuffRank}>
+              批量获取实时排名
+            </Button>
+          </Space.Compact>
+
           <Space.Compact>
             <InputNumber
               value={summaryStartIndex}

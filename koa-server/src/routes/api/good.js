@@ -38,7 +38,7 @@ router.post('/add', async (ctx) => {
 });
 
 router.get('/list', async (ctx) => {
-  const { goodName = '', page, pageSize = 100 } = ctx.request.query;
+  const { goodName = '', userId, page, pageSize = 100 } = ctx.request.query;
   const _filter = {
     $or: [
       // 多字段同时匹配
