@@ -8,6 +8,10 @@ export default defineConfig({
   request: {},
   layout: {
     title: '测试Demo',
+    contentStyle: {
+      paddingInline: '18px',
+      paddingBlock: '12px',
+    },
   },
   routes: [
     {

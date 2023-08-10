@@ -580,14 +580,9 @@ const History: React.FC<unknown> = () => {
       .then((data) => {
         const { list = [] } = data;
         // setGoodList(list);
-        console.log(123123123123, list);
         setGoodList(
           list.filter((item) => {
-            if (userId === userIdList[0]) {
-              return item.buffUserId === userId || !item.buffUserId;
-            } else {
-              return item.buffUserId === userId;
-            }
+            return item.buffUserId === userId || !item.buffUserId;
           }),
         );
       });

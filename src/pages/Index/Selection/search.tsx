@@ -31,9 +31,9 @@ const Search: React.FC<{
     profitRateMin: 0,
     profitRateMax: 99999.99,
     // buff登录需要信息
-    session: '1-UAWON4BusRZyKLVdCA7Ex9cpGF0qz6P_BydrPGIASh-32033426027',
-    csrf_token:
-      'IjE0N2VmMWFjMzViNmI4MGZjOGJjZjQzODdiZjQ0ZmUwNjNhZDBlNjgi.F3meEA.fFESV0EaamFhhvcMZ1dVY9dvsko',
+    // session: '1-UAWON4BusRZyKLVdCA7Ex9cpGF0qz6P_BydrPGIASh-32033426027',
+    // csrf_token:
+    //   'IjE0N2VmMWFjMzViNmI4MGZjOGJjZjQzODdiZjQ0ZmUwNjNhZDBlNjgi.F3meEA.fFESV0EaamFhhvcMZ1dVY9dvsko',
   };
   const [openStatus, setOpenStatus] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,10 +42,10 @@ const Search: React.FC<{
     const params = form.getFieldValue();
 
     // 更新本地token和csrf_token
-    const csrf_token = params.csrf_token;
-    const session = params.session;
-    document.cookie = `session=${session}`;
-    document.cookie = `csrf_token=${csrf_token};`;
+    // const csrf_token = params.csrf_token;
+    // const session = params.session;
+    // document.cookie = `session=${session}`;
+    // document.cookie = `csrf_token=${csrf_token};`;
 
     let formData = new FormData();
     Object.keys(params).forEach((key) => {
@@ -174,7 +174,7 @@ const Search: React.FC<{
               addonAfter="%"
             />
           </Form.Item>
-          <Divider orientation="left" orientationMargin="10px">
+          {/* <Divider orientation="left" orientationMargin="10px">
             Buff筛选条件
           </Divider>
           <Form.Item label="session" name="session">
@@ -192,7 +192,7 @@ const Search: React.FC<{
           <Form.Item label=""></Form.Item>
           <Divider orientation="left" orientationMargin="10px">
             steam筛选条件
-          </Divider>
+          </Divider> */}
 
           <Divider />
         </Form>

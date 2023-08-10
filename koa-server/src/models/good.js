@@ -22,6 +22,10 @@ const GoodSchema = new Schema({
     type: Number,
     required: true,
   },
+  cardRate: {
+    type: Number,
+    require: true,
+  },
   buffUserId: {
     type: String,
     required: true,

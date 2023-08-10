@@ -19,6 +19,9 @@ dependencies:
   dayjs:
     specifier: ^1.11.9
     version: 1.11.9
+  js-cookie:
+    specifier: ^3.0.5
+    version: 3.0.5
   moment:
     specifier: ^2.29.4
     version: 2.29.4
@@ -7398,6 +7401,11 @@ packages:
       jest-util: 29.5.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
+    dev: false
+
+  /js-cookie@3.0.5:
+    resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
+    engines: {node: '>=14'}
     dev: false
 
   /js-sdsl@4.4.0:
