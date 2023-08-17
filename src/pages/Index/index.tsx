@@ -1,5 +1,6 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { Tabs, Radio, Space, Input, Button } from 'antd';
+import { Tabs, Affix, Space, Input, Button, Modal, Card } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { useModel } from '@umijs/max';
 import Cookies from 'js-cookie';
@@ -12,14 +13,18 @@ import Sale from './Sale/index';
 import Profit from './Profit/index';
 import SteamHistory from './SteamHistory/index';
 
+import styles from './index.less';
+
 const beforeunload = (e): void => {
   e.preventDefault();
   e.returnValue = '确定要离开当前页面吗？';
 };
 
 const Index: React.FC<unknown> = () => {
-  const [session, setSession] = useState(Cookies.get('session'));
-  const [csrfSession, setCsrfSession] = useState(Cookies.get('csrf_token'));
+  const [session, setSession] = useState(localStorage.getItem('session') || '');
+  const [csrfSession, setCsrfSession] = useState(
+    localStorage.getItem('csrf_token') || '',
+  );
 
   const { getBuffUserIdList, getCurrentBuffUserId, setCurrentBuffUserId } =
     useModel('commonModel');
@@ -27,10 +32,12 @@ const Index: React.FC<unknown> = () => {
 
   const userIdList = getBuffUserIdList();
 
-  const changeBuffUserId = (e) => {
-    const id = e.target.value;
-    setCurrentUserId(id);
-    setCurrentBuffUserId(id);
+  const [open, setOpen] = useState(true);
+
+  const changeBuffUserId = (value) => {
+    setCurrentUserId(value);
+    setCurrentBuffUserId(value);
+    setOpen(false);
   };
 
   useEffect(() => {
@@ -40,15 +47,17 @@ const Index: React.FC<unknown> = () => {
     };
   }, []);
   return (
-    <>
+    <div className={styles.pageIndexWrapper}>
+      <Affix style={{ position: 'absolute', top: 5, right: 100 }}>
+        <Button
+          type="primary"
+          icon={<UserOutlined />}
+          onClick={() => setOpen(true)}
+        >{`账户${
+          userIdList.indexOf(currentUserId) + 1
+        }：${currentUserId}`}</Button>
+      </Affix>
       <Space style={{ marginBottom: '12px' }}>
-        <Radio.Group
-          options={userIdList.map((item) => ({ label: item, value: item }))}
-          value={currentUserId}
-          onChange={changeBuffUserId}
-          optionType="button"
-          buttonStyle="solid"
-        ></Radio.Group>
         <Space.Compact>
           <Input
             placeholder="buff session"
@@ -71,6 +80,8 @@ const Index: React.FC<unknown> = () => {
             onClick={() => {
               Cookies.set('session', session);
               Cookies.set('csrf_token', csrfSession);
+              localStorage.setItem('session', session);
+              localStorage.setItem('csrf_token', csrfSession);
             }}
           >
             更新Cookie
@@ -94,7 +105,32 @@ const Index: React.FC<unknown> = () => {
         <Profit />
       </TabPane> */}
       </Tabs>
-    </>
+      <Modal
+        title="请选择Buff用户"
+        open={open}
+        footer={null}
+        onCancel={() => setOpen(false)}
+      >
+        <Space style={{ margin: '18px 0px' }}>
+          {userIdList.map((item, index) => {
+            return (
+              <Card
+                key={item}
+                className={
+                  currentUserId === item
+                    ? 'card-item-checked'
+                    : 'card-item-normal'
+                }
+                title={`账户${index + 1}`}
+                onClick={() => changeBuffUserId(item)}
+              >
+                {item}
+              </Card>
+            );
+          })}
+        </Space>
+      </Modal>
+    </div>
   );
 };
 

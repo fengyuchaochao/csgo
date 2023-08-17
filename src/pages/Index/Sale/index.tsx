@@ -7,7 +7,7 @@ import {
   Image,
   message,
   Tag,
-  Radio,
+  Typography,
   Select,
   InputNumber,
   Badge,
@@ -33,6 +33,7 @@ const getCookie = (name) => {
 };
 
 const priceRateList = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
+
 const stateList = [
   {
     label: '全部',
@@ -47,6 +48,18 @@ const stateList = [
     value: 'cansell',
   },
 ];
+
+// 根据利润率显示不同的颜色
+const getSummaryColor = (rate) => {
+  if (!rate) return '';
+  if (rate >= 15) {
+    return '#52c41a';
+  } else if (rate < 15 && rate >= 0) {
+    return '';
+  } else if (rate < 0) {
+    return '#cf1322';
+  }
+};
 
 const Sale: React.FC<unknown> = () => {
   const columns: any[] = [
@@ -101,41 +114,62 @@ const Sale: React.FC<unknown> = () => {
     },
     {
       title: 'buff在售最低价格',
+      width: 150,
       render: (_, record) => {
         const lowestBuffPrice = record?.lowestPriceBuffOrder?.price;
         const price = record.steamBuyPrice * cardRate; // 成本
+        const fee = record.fee; //手续费
 
-        const ratePrice = (lowestBuffPrice - price).toFixed(2);
+        const ratePrice = (lowestBuffPrice - price - fee).toFixed(2);
         const ratePercent = ((+ratePrice / price) * 100).toFixed(2);
         if (!lowestBuffPrice) return;
         return (
-          <span>
-            {lowestBuffPrice}（{ratePrice}）（{ratePercent}%）
-          </span>
+          <Space direction="vertical" size="small">
+            <span>
+              buff最低价：<b>{lowestBuffPrice}</b>
+            </span>
+            <span>
+              手续费：<b>{fee}</b>
+            </span>
+            <span>
+              利润：<b>{ratePrice}</b>
+            </span>
+            <Typography.Text style={{ color: getSummaryColor(ratePercent) }}>
+              利润率：<b>{ratePercent} %</b>
+            </Typography.Text>
+          </Space>
         );
       },
     },
     {
       title: '自己当前在售价格',
+      width: 150,
       render: (_, record) => {
         const castPrice = record?.steamBuyPrice * cardRate;
         const curPrice = record?.myOrder?.price;
+        const curFee = record?.myOrderFee;
 
-        const ratePrice = (curPrice - castPrice).toFixed(2);
+        const ratePrice = (curPrice - castPrice - curFee).toFixed(2);
         const ratePercent = (
-          ((curPrice - castPrice) / castPrice) *
+          ((curPrice - castPrice - curFee) / castPrice) *
           100
         ).toFixed(2);
         if (!curPrice) return;
         return (
-          <p>
-            <span>{curPrice}</span>
-            {castPrice && (
-              <span>
-                （{ratePrice}）（{ratePercent} %）
-              </span>
-            )}
-          </p>
+          <Space direction="vertical" size="small">
+            <span>
+              我的价格：<b>{curPrice}</b>
+            </span>
+            <span>
+              手续费：<b>{curFee}</b>
+            </span>
+            <span>
+              利润：<b>{ratePrice}</b>
+            </span>
+            <Typography.Text style={{ color: getSummaryColor(ratePercent) }}>
+              利润率：<b>{ratePercent}%</b>
+            </Typography.Text>
+          </Space>
         );
       },
     },
@@ -283,18 +317,6 @@ const Sale: React.FC<unknown> = () => {
     });
   };
 
-  // 根据利润率显示不同的颜色
-  const getSummaryColor = (rate) => {
-    if (!rate) return '';
-    if (rate >= 15) {
-      return '#3f8600';
-    } else if (rate < 15 && rate >= 0) {
-      return '';
-    } else if (rate < 0) {
-      return '#cf1322';
-    }
-  };
-
   // 获取单价饰品的成本
   const getCostPriceByGoodId = async (goodId, item) => {
     const url = `/local/api/good/detail?goodId=${goodId}`;
@@ -319,10 +341,10 @@ const Sale: React.FC<unknown> = () => {
     item.lowestPriceBuffOrder = lowestPriceBuffOrder;
 
     const myOrderIndex = orderList.findIndex(
-      (order) =>
-        order.user_id === searchFormData.userId &&
-        order.id === item.sell_order_id,
+      (order) => order.user_id === searchFormData.userId,
+      //&& order.id === item.sell_order_id,
     );
+
     item.myOrderList = [...orderList];
     item.myOrderIndex = myOrderIndex + 1;
     item.myOrder = orderList[myOrderIndex];
@@ -451,10 +473,57 @@ const Sale: React.FC<unknown> = () => {
     }
   };
 
+  // 获取手续费（buff最低价格对应的手续费）
+  const getFeeByGoodId = async (goodId, item) => {
+    const lowestBuffPrice = item?.lowestPriceBuffOrder?.price;
+    message.loading('获取手续中...');
+    const params = {
+      game: 'csgo',
+      goods_ids: goodId,
+      is_change: 1,
+      check_price: 1,
+      prices: lowestBuffPrice,
+    };
+    const { game, goods_ids, is_change, check_price, prices } = params;
+    const url = `/api/market/batch/fee?game=${game}&goods_ids=${goods_ids}&is_change=${is_change}&check_price=${check_price}&prices=${prices}`;
+    const data = await fetch(url).then((response) => response.json());
+
+    const fee = data?.data?.total_fee || 0;
+
+    item.fee = fee;
+    setGoodList([...goodListRef.current]);
+  };
+
+  // 获取手续费（自己价格对应的手续费）
+  const getMyOrderFeeByGoodId = async (goodId, item) => {
+    const price = item?.myOrder?.price;
+    message.loading('获取手续中...');
+    const params = {
+      game: 'csgo',
+      goods_ids: goodId,
+      is_change: 1,
+      check_price: 1,
+      prices: price,
+    };
+    const { game, goods_ids, is_change, check_price, prices } = params;
+    const url = `/api/market/batch/fee?game=${game}&goods_ids=${goods_ids}&is_change=${is_change}&check_price=${check_price}&prices=${prices}`;
+    const data = await fetch(url).then((response) => response.json());
+
+    const fee = data?.data?.total_fee || 0;
+
+    item.myOrderFee = fee;
+    setGoodList([...goodListRef.current]);
+  };
+
   const refresh = async (record) => {
     message.loading('获取价格排名中...');
     await getCostPriceByGoodId(record.goods_id, record);
     await getBuffRank(record.goods_id, record);
+    await getFeeByGoodId(record.goods_id, record);
+    if (record?.myOrder) {
+      await getMyOrderFeeByGoodId(record.goods_id, record);
+    }
+
     message.destroy();
   };
 
