@@ -101,13 +101,18 @@ const Sale: React.FC<unknown> = () => {
     },
     {
       title: '单价成本',
+      width: 150,
       render: (_, record) => {
         return (
           record.steamBuyPrice && (
-            <p>
-              <span>{(record.steamBuyPrice * cardRate).toFixed(2)}</span>
-              <span>（{record.steamBuyPrice}$）</span>
-            </p>
+            <Space direction="vertical" size="small">
+              <span>美元：{record.steamBuyPrice}</span>
+              <span>
+                人民币：
+                <b>{(record.steamBuyPrice * record?.cardRate).toFixed(2)} </b>
+              </span>
+              <span>卡价：{record?.cardRate}</span>
+            </Space>
           )
         );
       },
@@ -117,7 +122,7 @@ const Sale: React.FC<unknown> = () => {
       width: 150,
       render: (_, record) => {
         const lowestBuffPrice = record?.lowestPriceBuffOrder?.price;
-        const price = record.steamBuyPrice * cardRate; // 成本
+        const price = record.steamBuyPrice * record?.cardRate; // 成本
         const fee = record.fee; //手续费
 
         const ratePrice = (lowestBuffPrice - price - fee).toFixed(2);
@@ -128,9 +133,7 @@ const Sale: React.FC<unknown> = () => {
             <span>
               buff最低价：<b>{lowestBuffPrice}</b>
             </span>
-            <span>
-              手续费：<b>{fee}</b>
-            </span>
+            <span>手续费：{fee}</span>
             <span>
               利润：<b>{ratePrice}</b>
             </span>
@@ -145,7 +148,7 @@ const Sale: React.FC<unknown> = () => {
       title: '自己当前在售价格',
       width: 150,
       render: (_, record) => {
-        const castPrice = record?.steamBuyPrice * cardRate;
+        const castPrice = record?.steamBuyPrice * record?.cardRate;
         const curPrice = record?.myOrder?.price;
         const curFee = record?.myOrderFee;
 
@@ -160,9 +163,7 @@ const Sale: React.FC<unknown> = () => {
             <span>
               我的价格：<b>{curPrice}</b>
             </span>
-            <span>
-              手续费：<b>{curFee}</b>
-            </span>
+            <span>手续费：{curFee}</span>
             <span>
               利润：<b>{ratePrice}</b>
             </span>
@@ -251,8 +252,6 @@ const Sale: React.FC<unknown> = () => {
     userId: getCurrentBuffUserId(),
     rate: 0.05,
   });
-  const localCardRate = localStorage.getItem('cardRate');
-  const cardRate = localCardRate ? +localCardRate : 6;
 
   // 总结数据
   const [showSummaryData, setShowSummaryData] = useState(false);
@@ -271,7 +270,7 @@ const Sale: React.FC<unknown> = () => {
     );
     // 总成本
     const totalPrice = filterGoodList.reduce((total, current) => {
-      const price = +(current.steamBuyPrice * cardRate).toFixed(2);
+      const price = +(current.steamBuyPrice * current.cardRate).toFixed(2);
       return total + price;
     }, 0);
 
@@ -284,7 +283,7 @@ const Sale: React.FC<unknown> = () => {
     // buff总利润
     const totalBuffProfit = filterGoodList.reduce((total, current) => {
       const lowestBuffPrice = current?.lowestPriceBuffOrder?.price;
-      const price = current.steamBuyPrice * cardRate;
+      const price = current.steamBuyPrice * current.cardRate;
       const ratePrice = (lowestBuffPrice - price).toFixed(2);
 
       return total + +ratePrice;
@@ -322,6 +321,7 @@ const Sale: React.FC<unknown> = () => {
     const url = `/local/api/good/detail?goodId=${goodId}`;
     const { data } = await fetch(url).then((response) => response.json());
     item.steamBuyPrice = data?.steamBuyPrice;
+    item.cardRate = data?.cardRate || 6;
 
     setGoodList([...goodListRef.current]);
   };
@@ -410,7 +410,7 @@ const Sale: React.FC<unknown> = () => {
       return;
     }
 
-    const castPrice = record?.steamBuyPrice * cardRate;
+    const castPrice = record?.steamBuyPrice * record?.cardRate;
     const lowestPrice = record?.lowestPriceBuffOrder?.price;
 
     const rate = Number(lowestPrice - castPrice) / castPrice;

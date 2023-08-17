@@ -96,7 +96,6 @@ router.get('/detail', async (ctx) => {
   const data = await Good.findOne({
     goodId,
   });
-
   ctx.status = 200;
   ctx.body = {
     data,
