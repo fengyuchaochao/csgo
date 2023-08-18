@@ -61,16 +61,18 @@ const Index: React.FC<unknown> = () => {
         <Space.Compact>
           <Input
             placeholder="buff session"
-            style={{ width: '450px' }}
+            style={{ width: '500px' }}
             value={session}
+            allowClear
             onChange={(e) => {
               setSession(e.target.value);
             }}
           />
           <Input
             placeholder="buff csrf_token"
-            style={{ width: '400px' }}
+            style={{ width: '500px' }}
             value={csrfSession}
+            allowClear
             onChange={(e) => {
               setCsrfSession(e.target.value);
             }}
