@@ -89,13 +89,18 @@ const Sale: React.FC<unknown> = () => {
       dataIndex: 'goodName',
       key: 'goodName',
       render: (_, record) => {
+        const paintwear = record?.asset_info?.paintwear;
         return (
-          <span
+          <Space
+            direction="vertical"
             style={{ cursor: 'pointer' }}
             onClick={() => copyName(record.name)}
           >
-            {record.name} <CopyOutlined style={{ color: '#1776FF' }} />
-          </span>
+            <span>
+              {record.name} <CopyOutlined style={{ color: '#1776FF' }} />
+            </span>
+            {paintwear && <span>磨损度：{paintwear}</span>}
+          </Space>
         );
       },
     },
