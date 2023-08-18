@@ -52,9 +52,9 @@ const stateList = [
 // 根据利润率显示不同的颜色
 const getSummaryColor = (rate) => {
   if (!rate) return '';
-  if (rate >= 15) {
+  if (rate >= 10) {
     return '#52c41a';
-  } else if (rate < 15 && rate >= 0) {
+  } else if (rate < 10 && rate >= 0) {
     return '';
   } else if (rate < 0) {
     return '#cf1322';

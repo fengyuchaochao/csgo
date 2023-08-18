@@ -345,7 +345,7 @@ const History: React.FC<unknown> = () => {
             <span>
               单件利润：
               <b>
-                <Typography.Text type={+rate > 0.15 ? 'success' : 'default'}>
+                <Typography.Text type={+rate > 0.1 ? 'success' : 'default'}>
                   {rateValue}（{(+rate * 100).toFixed(2)}%）
                 </Typography.Text>
               </b>
@@ -441,7 +441,7 @@ const History: React.FC<unknown> = () => {
               <b>
                 {ratePrice}¥ ({(rate * 100).toFixed(2)}%）
               </b>
-              {rate >= 0.15 ? (
+              {rate >= 0.1 ? (
                 <CheckCircleFilled style={{ color: '#52c41a' }} />
               ) : (
                 <CloseCircleFilled style={{ color: 'red' }} />
