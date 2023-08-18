@@ -61,7 +61,7 @@ const Index: React.FC<unknown> = () => {
         <Space.Compact>
           <Input
             placeholder="buff session"
-            style={{ width: '350px' }}
+            style={{ width: '450px' }}
             value={session}
             onChange={(e) => {
               setSession(e.target.value);

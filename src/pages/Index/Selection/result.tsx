@@ -109,6 +109,22 @@ const Result: React.FC<{
 
     setResultList([...resultList]);
   };
+  // 获取指定价格对应的手续费
+  const getOrderFeeByGoodId = async (goodId, price) => {
+    const params = {
+      game: 'csgo',
+      goods_ids: goodId,
+      is_change: 1,
+      check_price: 1,
+      prices: price,
+    };
+    const { game, goods_ids, is_change, check_price, prices } = params;
+    const url = `/api/market/batch/fee?game=${game}&goods_ids=${goods_ids}&is_change=${is_change}&check_price=${check_price}&prices=${prices}`;
+    const data = await fetch(url).then((response) => response.json());
+
+    const fee = data?.data?.total_fee || 0;
+    return fee;
+  };
 
   // 获取饰品最近一个月的buff最低价
   const getLowestDataByLatestMonth = async (goodId) => {
@@ -207,6 +223,11 @@ const Result: React.FC<{
     if (data3) {
       record.lowestPriceByLatestMonth = data3;
     }
+
+    // 获取当前最低价格对应的手续费
+    const buffLowestPriceCN = record?.lowestPriceBuffOrder?.price;
+    const fee = await getOrderFeeByGoodId(goodInfo.id, buffLowestPriceCN);
+    record.fee = fee;
 
     setResultList([...resultList]);
   };
@@ -397,7 +418,7 @@ const Result: React.FC<{
         const steamCostPriceCN =
           (steamHighestBuyPrice * searchParams.cardPrice) / 100;
         const ratePrice = Number(
-          (buffLowestPriceCN - steamCostPriceCN).toFixed(2),
+          (buffLowestPriceCN - steamCostPriceCN - record?.fee).toFixed(2),
         );
         const rate = Number((ratePrice / steamCostPriceCN).toFixed(4));
         return (

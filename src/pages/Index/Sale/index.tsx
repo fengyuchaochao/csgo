@@ -223,13 +223,13 @@ const Sale: React.FC<unknown> = () => {
             <Button size="small" type="primary" onClick={() => refresh(record)}>
               获取实时排名
             </Button>
-            <Button
+            {/* <Button
               size="small"
               type="primary"
               onClick={() => updatePrice(record)}
             >
               修改价格
-            </Button>
+            </Button> */}
           </Space>
         );
       },

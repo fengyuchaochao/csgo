@@ -74,6 +74,23 @@ const History: React.FC<unknown> = () => {
     return lowestPrice;
   };
 
+  // 获取指定价格对应的手续费
+  const getOrderFeeByGoodId = async (goodId, price) => {
+    const params = {
+      game: 'csgo',
+      goods_ids: goodId,
+      is_change: 1,
+      check_price: 1,
+      prices: price,
+    };
+    const { game, goods_ids, is_change, check_price, prices } = params;
+    const url = `/api/market/batch/fee?game=${game}&goods_ids=${goods_ids}&is_change=${is_change}&check_price=${check_price}&prices=${prices}`;
+    const data = await fetch(url).then((response) => response.json());
+
+    const fee = data?.data?.total_fee || 0;
+    return fee;
+  };
+
   const getLatestBuffData = async (record) => {
     // 根据成交记录
     const res = await getOrderListByGoodId(record.goodId);
@@ -83,6 +100,19 @@ const History: React.FC<unknown> = () => {
     const data = await getOrderListByGoodId(record.goodId, 'default');
     const orderList2 = data?.items || [];
     record.lowestPriceBuffOrder = orderList2[0];
+
+    // 获取buff订单的当前最低价格对应的手续费
+    const lowestPriceBuffOrder = record?.lowestPriceBuffOrder?.price;
+    const fee = await getOrderFeeByGoodId(record.goodId, lowestPriceBuffOrder);
+    record.fee = fee;
+
+    // 获取当前成本价格对应的手续费
+    const cardRate = record.cardRate || getCardRate();
+    const myFee = await getOrderFeeByGoodId(
+      record.goodId,
+      record.steamBuyPrice * cardRate,
+    );
+    record.myFee = myFee;
 
     // 获取buff订单，最近一个月的最低价格
     const data3 = await getLowestDataByLatestMonth(record.goodId);
@@ -287,52 +317,48 @@ const History: React.FC<unknown> = () => {
         );
       },
     },
-
     {
-      title: '单件成本',
-      width: 100,
-      render: (_, record) => {
-        const cardRate = record.cardRate || getCardRate();
-        return (
-          <p>
-            <span>{(record.steamBuyPrice * cardRate).toFixed(2)}</span>
-            <span>（{record.steamBuyPrice}$）</span>
-            <Tag color="processing">{cardRate}</Tag>
-          </p>
-        );
-      },
-    },
-    {
-      title: '单件利润',
-      width: 100,
+      title: '单件成本及利润',
+      width: 250,
       render: (_, record) => {
         // 利润
         if (!record?.lowestPriceBuffOrder) return;
         const cardRate = record.cardRate || getCardRate();
         const steamBuyPrice = (record.steamBuyPrice * cardRate).toFixed(2);
         const lowestPriceBuffOrder = record?.lowestPriceBuffOrder?.price;
-        const rateValue = (lowestPriceBuffOrder - +steamBuyPrice).toFixed(2);
+        const rateValue = (
+          lowestPriceBuffOrder -
+          +steamBuyPrice -
+          record?.myFee
+        ).toFixed(2);
         const rate = (+rateValue / +steamBuyPrice).toFixed(2);
 
         return (
-          <b>
-            <Typography.Text type={+rate > 0.15 ? 'success' : 'default'}>
-              {rateValue}（{(+rate * 100).toFixed(2)}%）
-            </Typography.Text>
-          </b>
+          <Space direction="vertical">
+            <span>
+              单件成本：
+              <b>{(record.steamBuyPrice * cardRate).toFixed(2)}</b>
+              <span>（{record.steamBuyPrice}$）</span>
+              <Tag color="processing">{cardRate}</Tag>
+            </span>
+            <span>手续费：{record?.myFee}</span>
+            <span>
+              单件利润：
+              <b>
+                <Typography.Text type={+rate > 0.15 ? 'success' : 'default'}>
+                  {rateValue}（{(+rate * 100).toFixed(2)}%）
+                </Typography.Text>
+              </b>
+            </span>
+            <span>购买数量：{record?.steamBuyCount}</span>
+          </Space>
         );
       },
     },
     {
-      title: '购买数量',
-      dataIndex: 'steamBuyCount',
-      key: 'steamBuyCount',
-      width: 100,
-    },
-    {
       title: 'buff在售价格（最低）',
       key: 'lowestPriceBuffOrder',
-      width: 180,
+      width: 250,
       render: (_, record) => {
         const lowestPriceByLatestMonth = record?.lowestPriceByLatestMonth;
         const price = record?.lowestPriceBuffOrder?.price;
@@ -348,14 +374,18 @@ const History: React.FC<unknown> = () => {
         const flag = +lowestPriceByLatestMonth > +steamHighestBuyPriceCN;
 
         return price ? (
-          <p>
+          <Space direction="vertical">
             <span>
-              {price}（{(price / 6.9).toFixed(2)}$）
+              当前最低价：
+              <b>
+                {price}（{(price / 6.9).toFixed(2)}$）
+              </b>
             </span>
-            <b style={{ color: flag ? '#52c41a' : '' }}>
-              {lowestPriceByLatestMonth}
-            </b>
-          </p>
+            <span style={{ color: flag ? '#52c41a' : '' }}>
+              最近一个月最低价：
+              <b>{lowestPriceByLatestMonth}</b>
+            </span>
+          </Space>
         ) : (
           ''
         );
@@ -380,7 +410,7 @@ const History: React.FC<unknown> = () => {
     },
     {
       title: '是否符合条件',
-      width: 280,
+      width: 220,
       render: (_, record) => {
         if (!record.lowestPriceBuffOrder || !record.steamLowestSellPrice)
           return;
@@ -389,11 +419,11 @@ const History: React.FC<unknown> = () => {
         const steamHighestBuyPrice = record?.steamHighestBuyPrice;
         const steamCostPriceCN = steamHighestBuyPrice * cardRate;
         const ratePrice = Number(
-          (buffLowestPriceCN - steamCostPriceCN).toFixed(2),
+          (buffLowestPriceCN - steamCostPriceCN - record?.fee).toFixed(2),
         );
         const rate = Number((ratePrice / steamCostPriceCN).toFixed(4));
         return (
-          <Space>
+          <Space direction="vertical">
             <span>
               交易记录：
               {record.lowestPriceBuffOrder &&
@@ -506,7 +536,9 @@ const History: React.FC<unknown> = () => {
             <Button
               size="small"
               type="primary"
-              onClick={() => getLatestBuffData(record)}
+              onClick={() => {
+                getLatestBuffData(record);
+              }}
             >
               实时数据
             </Button>
